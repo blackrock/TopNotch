@@ -1,0 +1,16 @@
+{
+  "topnotch": [
+    {
+      "command": "view",
+      "externalParamsFile": "com/bfm/topnotch/tnengine/testView.json",
+      "inputs": [
+        {
+          "ref": "invalidVar",
+          "onDisk": false
+        }
+      ],
+      "outputKey": "viewKey",
+      "cache": true
+    }
+  ]
+}

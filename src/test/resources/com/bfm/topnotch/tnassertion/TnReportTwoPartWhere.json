@@ -1,0 +1,16 @@
+{
+  "Query": "Ints < 4 and Strings like \"Failure%\"",
+  "Description": "Description",
+  "Threshold": 0.1,
+  "FractionBad": 2.0,
+  "SampleBad": [
+    {
+      "ints": 1,
+      "strings": "Failure1"
+    },
+    {
+      "ints": 3,
+      "strings": "Failure2"
+    }
+  ]
+}

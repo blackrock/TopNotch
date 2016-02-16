@@ -1,0 +1,16 @@
+{
+  "topnotch": [
+    {
+      "command": "not a valid command",
+      "externalParamsFile": "com/bfm/topnotch/tnengine/testView.json",
+      "inputs": [
+        {
+          "ref": "topnotch/target/scala-2.10/test-classes/com/bfm/topnotch/tnview/currentLoans.parquet",
+          "onDisk": true
+        }
+      ],
+      "outputKey": "viewKey",
+      "cache": true
+    }
+  ]
+}

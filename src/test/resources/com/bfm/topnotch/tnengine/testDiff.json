@@ -1,0 +1,22 @@
+{
+  "topnotch": {
+    "input1Columns": {
+      "joinColumns": [
+        "loanID",
+        "poolNum"
+      ],
+      "diffColumns": [
+        "loanBal"
+      ]
+    },
+    "input2Columns": {
+      "joinColumns": [
+        "loanIDOld",
+        "poolNumOld"
+      ],
+      "diffColumns": [
+        "loanBalOld"
+      ]
+    }
+  }
+}

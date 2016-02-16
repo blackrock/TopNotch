@@ -1,0 +1,42 @@
+{
+  "topnotch": [
+    {
+      "command": "view",
+      "externalParamsFile": "com/bfm/topnotch/tnengine/testView.json",
+      "inputs": [
+        {
+          "ref": "target/scala-2.10/test-classes/com/bfm/topnotch/tnview/currentLoans.parquet",
+          "onDisk": true
+        }
+      ],
+      "outputKey": "viewKey",
+      "cache": true
+    },
+    {
+      "command": "diff",
+      "externalParamsFile": "com/bfm/topnotch/tnengine/testDiff.json",
+      "input1": {
+        "ref": "target/scala-2.10/test-classes/com/bfm/topnotch/tndiff/currentLoans.parquet",
+        "onDisk": true
+      },
+      "input1Name": "cur",
+      "input2": {
+        "ref": "target/scala-2.10/test-classes/com/bfm/topnotch/tndiff/oldLoans.parquet",
+        "onDisk": true
+      },
+      "input2Name": "old",
+      "outputKey": "diffKey",
+      "outputPath": "target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/diffOutput.parquet"
+    },
+    {
+      "command": "assertion",
+      "externalParamsFile": "com/bfm/topnotch/tnengine/testAssertion.json",
+      "input": {
+        "ref": "viewKey",
+        "onDisk": false
+      },
+      "outputKey": "assertionKey",
+      "outputPath": "target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet"
+    }
+  ]
+}

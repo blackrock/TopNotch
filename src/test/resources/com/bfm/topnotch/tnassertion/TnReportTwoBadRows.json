@@ -1,0 +1,14 @@
+{
+  "Query": "Ints < 4",
+  "Description": "Description",
+  "Threshold": 0.1,
+  "FractionBad": 2.0,
+  "SampleBad": [
+    {
+      "ints": 1
+    },
+    {
+      "ints": 3
+    }
+  ]
+}

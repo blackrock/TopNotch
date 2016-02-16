@@ -1,0 +1,7 @@
+{
+  "topnotch": {
+    "query": "Ints > 1 OR Ints < 2",
+    "description": "This rule does no filtering. Every data point passes.",
+    "threshold": 0.0
+  }
+}

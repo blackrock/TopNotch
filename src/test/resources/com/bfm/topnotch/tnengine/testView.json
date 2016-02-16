@@ -1,0 +1,8 @@
+{
+  "topnotch": {
+    "tableAliases": [
+      "loanData"
+    ],
+    "query": "select * from loanData"
+  }
+}

@@ -1,0 +1,4 @@
+{"Ints": 1, "Doubles": 2.0, "Strings": "Failure1", "Booleans": false}
+{"Ints": 3, "Doubles": 4.0, "Strings": "Failure2", "Booleans": true}
+{"Ints": 5, "Doubles": 6.0, "Strings": "Failure3", "Booleans": false}
+{"Ints": 7, "Doubles": 8.0, "Strings": "Failure4", "Booleans": true}

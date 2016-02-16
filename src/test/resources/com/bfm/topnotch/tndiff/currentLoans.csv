@@ -1,0 +1,7 @@
+poolNum,loanID,loanBal,loanFICO,status
+1,1,5,650,C
+1,2,7,400,D3
+2,3,6,800,NA
+2,4,5,700,C
+1,5,19,350,D3
+2,6,15,800,C

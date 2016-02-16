@@ -1,0 +1,14 @@
+{
+  "topnotch": [
+    {
+      "command": "assertion",
+      "externalParamsFile": "assertions.json",
+      "input": {
+        "ref": "topnotch/exampleAssertionInput.parquet",
+        "onDisk": true
+      },
+      "outputKey": "exampleAssertionReport",
+      "outputPath": "topnotch/exampleAssertionOutput.parquet"
+    }
+  ]
+}
