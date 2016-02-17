@@ -222,4 +222,5 @@ The following list describes each component in-depth and demonstrates how to wri
     }
     ```
 
+Copyright © 2016 BlackRock, Inc. All Rights Reserved.
 
