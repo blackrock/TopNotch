@@ -1,0 +1,243 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html>
+        <head>
+          <title>tnengine - com.bfm.topnotch.tnengine</title>
+          <meta name="description" content="tnengine - com.bfm.topnotch.tnengine" />
+          <meta name="keywords" content="tnengine com.bfm.topnotch.tnengine" />
+          <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+          
+      <link href="../../../../lib/template.css" media="screen" type="text/css" rel="stylesheet" />
+      <link href="../../../../lib/diagrams.css" media="screen" type="text/css" rel="stylesheet" id="diagrams-css" />
+      <script type="text/javascript">
+         if(top === self) {
+            var url = '../../../../index.html';
+            var hash = 'com.bfm.topnotch.tnengine.package';
+            var anchor = window.location.hash;
+            var anchor_opt = '';
+            if (anchor.length >= 1)
+              anchor_opt = '@' + anchor.substring(1);
+            window.location.href = url + '#' + hash + anchor_opt;
+         }
+   	  </script>
+    
+        </head>
+        <body class="value">
+      <div id="definition">
+        <img src="../../../../lib/package_big.png" />
+        <p id="owner"><a href="../../../package.html" class="extype" name="com">com</a>.<a href="../../package.html" class="extype" name="com.bfm">bfm</a>.<a href="../package.html" class="extype" name="com.bfm.topnotch">topnotch</a></p>
+        <h1>tnengine</h1>
+      </div>
+
+      <h4 id="signature" class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">package</span>
+      </span>
+      <span class="symbol">
+        <span class="name">tnengine</span>
+      </span>
+      </h4>
+      
+          <div id="comment" class="fullcommenttop"></div>
+        
+
+      <div id="mbrsel">
+        <div id="textfilter"><span class="pre"></span><span class="input"><input id="mbrsel-input" type="text" accesskey="/" /></span><span class="post"></span></div>
+        
+        
+        <div id="visbl">
+            <span class="filtertype">Visibility</span>
+            <ol><li class="public in"><span>Public</span></li><li class="all out"><span>All</span></li></ol>
+          </div>
+      </div>
+
+      <div id="template">
+        <div id="allMembers">
+        
+
+        <div id="types" class="types members">
+              <h3>Type Members</h3>
+              <ol><li name="com.bfm.topnotch.tnengine.Input" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="InputextendsProductwithSerializable"></a>
+      <a id="Input:Input"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="Input.html"><span class="name">Input</span></a><span class="params">(<span name="ref">ref: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="onDisk">onDisk: <span class="extype" name="scala.Boolean">Boolean</span></span>, <span name="delimiter">delimiter: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>)</span><span class="result"> extends <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">The input to a command</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnCmd" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TnCmdextendsAnyRef"></a>
+      <a id="TnCmd:TnCmd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier">abstract </span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TnCmd.html"><span class="name">TnCmd</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A command for TnEngine to run
+</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnEngine" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnEngineextendsLogging"></a>
+      <a id="TnEngine:TnEngine"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TnEngine.html"><span class="name">TnEngine</span></a><span class="result"> extends <span class="extype" name="org.apache.spark.Logging">Logging</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">The class for running a plan.</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnErrorCmd" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnErrorCmdextendsTnCmdwithProductwithSerializable"></a>
+      <a id="TnErrorCmd:TnErrorCmd"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TnErrorCmd.html"><span class="name">TnErrorCmd</span></a><span class="params">(<span name="errorStr">errorStr: <span class="extype" name="scala.Predef.String">String</span></span>, <span name="cmdIdx">cmdIdx: <span class="extype" name="scala.Int">Int</span></span>, <span name="outputKey">outputKey: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;&quot;</span></span>, <span name="cache">cache: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="writeToDisk">writeToDisk: <span class="extype" name="scala.Boolean">Boolean</span> = <span class="symbol">false</span></span>, <span name="outputPath">outputPath: <span class="extype" name="scala.Option">Option</span>[<span class="extype" name="scala.Predef.String">String</span>] = <span class="symbol">scala.None</span></span>)</span><span class="result"> extends <a href="TnCmd.html" class="extype" name="com.bfm.topnotch.tnengine.TnCmd">TnCmd</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">The class indicating that there was at least one error in the configuration for this command</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnHBasePersister" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnHBasePersisterextendsTnPersister"></a>
+      <a id="TnHBasePersister:TnHBasePersister"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">class</span>
+      </span>
+      <span class="symbol">
+        <a href="TnHBasePersister.html"><span class="name">TnHBasePersister</span></a><span class="result"> extends <a href="TnPersister.html" class="extype" name="com.bfm.topnotch.tnengine.TnPersister">TnPersister</a></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An implementation of TnPersister for persisting reports to HBase</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnHDFSPersister" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnHDFSPersisterextendsTnPersisterwithProductwithSerializable"></a>
+      <a id="TnHDFSPersister:TnHDFSPersister"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">case class</span>
+      </span>
+      <span class="symbol">
+        <a href="TnHDFSPersister.html"><span class="name">TnHDFSPersister</span></a><span class="params">(<span name="hdfsPath">hdfsPath: <span class="extype" name="scala.Predef.String">String</span> = <span class="symbol">&quot;topnotch/&quot;</span></span>)</span><span class="result"> extends <a href="TnPersister.html" class="extype" name="com.bfm.topnotch.tnengine.TnPersister">TnPersister</a> with <span class="extype" name="scala.Product">Product</span> with <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">An implementation of TnPersister for persisting reports to HDFS</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnPersister" visbl="pub" data-isabs="true" fullComment="no" group="Ungrouped">
+      <a id="TnPersisterextendsAnyRef"></a>
+      <a id="TnPersister:TnPersister"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">trait</span>
+      </span>
+      <span class="symbol">
+        <a href="TnPersister.html"><span class="name">TnPersister</span></a><span class="result"> extends <span class="extype" name="scala.AnyRef">AnyRef</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">A trait for persisting a string representing a report to a location accessible by an external UI system
+</p>
+    </li></ol>
+            </div>
+
+        
+
+        <div id="values" class="values members">
+              <h3>Value Members</h3>
+              <ol><li name="com.bfm.topnotch.tnengine.TnCmdStrings" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnCmdStrings"></a>
+      <a id="TnCmdStrings:TnCmdStrings"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TnCmdStrings$.html"><span class="name">TnCmdStrings</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">The strings used for converting a config file into a TnCmd
+</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnEngine" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnEngine"></a>
+      <a id="TnEngine:TnEngine"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TnEngine$.html"><span class="name">TnEngine</span></a><span class="result"> extends <span class="extype" name="org.apache.spark.Logging">Logging</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">The entry for Spark into TopNotch.</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnHBasePersister" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnHBasePersister"></a>
+      <a id="TnHBasePersister:TnHBasePersister"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TnHBasePersister$.html"><span class="name">TnHBasePersister</span></a>
+      </span>
+      </h4>
+      <p class="comment cmt">The constants used by TnHBasePersister
+</p>
+    </li><li name="com.bfm.topnotch.tnengine.TnHDFSPersister" visbl="pub" data-isabs="false" fullComment="no" group="Ungrouped">
+      <a id="TnHDFSPersister"></a>
+      <a id="TnHDFSPersister:TnHDFSPersister"></a>
+      <h4 class="signature">
+      <span class="modifier_kind">
+        <span class="modifier"></span>
+        <span class="kind">object</span>
+      </span>
+      <span class="symbol">
+        <a href="TnHDFSPersister$.html"><span class="name">TnHDFSPersister</span></a><span class="result"> extends <span class="extype" name="scala.Serializable">Serializable</span></span>
+      </span>
+      </h4>
+      <p class="comment cmt">The constants used by TnHDFSPersister
+</p>
+    </li></ol>
+            </div>
+
+        
+
+        
+        </div>
+
+        <div id="inheritedMembers">
+        
+        
+        </div>
+
+        <div id="groupedMembers">
+        <div class="group" name="Ungrouped">
+              <h3>Ungrouped</h3>
+              
+            </div>
+        </div>
+
+      </div>
+
+      <div id="tooltip"></div>
+
+      <div id="footer">  </div>
+      <script defer="defer" type="text/javascript" id="jquery-js" src="../../../../lib/jquery.js"></script><script defer="defer" type="text/javascript" id="jquery-ui-js" src="../../../../lib/jquery-ui.js"></script><script defer="defer" type="text/javascript" id="tools-tooltip-js" src="../../../../lib/tools.tooltip.js"></script><script defer="defer" type="text/javascript" id="template-js" src="../../../../lib/template.js"></script>
+    </body>
+      </html>
