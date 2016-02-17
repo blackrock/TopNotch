@@ -2,10 +2,10 @@
   "topnotch": [
     {
       "command": "view",
-      "externalParamsFile": "com/bfm/topnotch/tnengine/testView.json",
+      "externalParamsFile": "testView.json",
       "inputs": [
         {
-          "ref": "target/scala-2.10/test-classes/com/bfm/topnotch/tnview/currentLoans.parquet",
+          "ref": "src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet",
           "onDisk": true
         }
       ],

@@ -23,14 +23,15 @@ TopNotch has three requirements:
 Follow the below steps to run TopNotch:
 
 1. Clone this repo.
-2. Get the latest JAR either by building this project or by downloading it from the GitHub page. Place it in this project's top level __bin__ folder.
+2. Get the latest JAR either by building this project or by downloading it from the releases portion of TopNotch's GitHub page. Place it in this project's top level __bin__ folder.
 2. Create the configuration files to test your data set.
     * See the __example__ folder for a sample data set and configuration files.
-    * To setup the example, create the __topnotch__ folder in your home directory on HDFS and upload __example/exampleAssertionInput.parquet__ to __topnotch/exampleAssertionInput.parquet__.
 3. Run __bin/TopNotchRunner.sh__ with all the configuration files passed as arguments. Ensure that your plan file is the first argument.
-    * To run the example, try the command ```bin/TopNotchRunner.sh example/plan.json example/assertions.json```
+    * To try the example, run the commands ```chmod u+x bin/TopNotchRunner.sh``` and then ```bin/TopNotchRunner.sh example/plan.json example/assertions.json``` . Please note that the example must be run from the root folder of the TopNotch project, as shown in the prior commands.
 4. View the resulting report and parquet file in the __topnotch__ folder in your home directory on HDFS.
-    * To view the results of the example, look at __~/topnotch/exampleAssertionReport__ and __~/topnotch/exampleAssertionOutput.parquet__ on HDFS.
+    * To view the results of the example, look at the JSON file __topnotch/exampleAssertionReport__ and the Parquet file __example/exampleAssertionOutput.parquet__ .
+
+Please note that you must change __bin/TopNotchRunner.sh__ in order to run TopNotch with a master other than local. It is currently recommended that you run TopNotch in local or client mode.
 
 ## High-Level Technical Summary
 
@@ -101,7 +102,7 @@ The following list describes each component in-depth and demonstrates how to wri
         * Set "delimiter" only if the input is a character-delimited file. In that case, set the option to the file's delimiter.
     * Each _command_ outputs a dataframe that can be referred to by later commands. Set the name of this with the "outputKey" value. If the user want this value to be cached for faster access, set "cache" to "true". The "cache" flag is optional and defaults to "false" if not specified.
     * Each _command_ can write its output to disk. Set "outputPath" to a path on HDFS if the result of a command is to be persisted. Relative paths will be relative to the user's home directory on HDFS. If "outputPath" is not set, the _command_'s result will not be not persisted.
-    * For each "externalParamsFile" entry, enter only the name of the file and not the path to it. For example, if the path to a file relative to the current location is __../configfiles/testView.json__, its configFile entry should be only __testView.json__.
+    * For each "externalParamsFile" entry, enter the path to the file relative to the plan. Currently, it is recommended that users place the plan and all associated command files in the same directory. 
     * For each assertion _command_, a report is written to the __~/topnotch__ folder on HDFS in JSON with the name of the command's output key.
 
     ```javascript

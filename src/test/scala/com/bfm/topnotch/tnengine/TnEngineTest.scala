@@ -3,7 +3,7 @@ package com.bfm.topnotch.tnengine
 import com.bfm.topnotch.tnassertion.{AssertionSeq, TnAssertionCmd, TnAssertionParams, TnAssertionRunner}
 import com.bfm.topnotch.tndiff.{TnDiffInput, TnDiffParams, TnDiffCmd, TnDiffCreator}
 import com.bfm.topnotch.tnview.{TnViewParams, TnViewCmd, TnViewCreator}
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ConfigValueFactory, ConfigFactory, Config}
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.{FalseFileFilter, TrueFileFilter}
 import org.scalatest.{Matchers, Tag}
@@ -37,7 +37,7 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   val completePlan = Seq[TnCmd](
     TnViewCmd(
       TnViewParams(Seq("loanData"), "select * from loanData"),
-      Seq(Input("target/scala-2.10/test-classes/com/bfm/topnotch/tnview/currentLoans.parquet", true)),
+      Seq(Input("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true)),
       "viewKey",
       true
     ),
@@ -46,9 +46,9 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
         TnDiffInput(Seq("loanID", "poolNum"), Seq("loanBal")),
         TnDiffInput(Seq("loanIDOld", "poolNumOld"), Seq("loanBalOld"))
       ),
-      Input("target/scala-2.10/test-classes/com/bfm/topnotch/tndiff/currentLoans.parquet", true),
+      Input("src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet", true),
       "cur",
-      Input("target/scala-2.10/test-classes/com/bfm/topnotch/tndiff/oldLoans.parquet", true),
+      Input("src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet", true),
       "old",
       false,
       "diffKey",
@@ -85,7 +85,7 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   def shouldContainNErrors(cmds: Seq[TnCmd], numErrors: Int, numNotErrors: Int = 0): Unit = {
     cmds.filter(_.isInstanceOf[TnErrorCmd]) should have length numErrors
     cmds should have length (numErrors + numNotErrors)
-}
+  }
 
   "collectErrors" should "return None when given an empty list of commands" taggedAs(tnEngineTag, collectErrorsTag) in {
     engine.collectErrors(Seq()) shouldBe None
@@ -100,6 +100,14 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
     engine.collectErrors(errorPlan) shouldBe Some(firstError.toString + secondError.toString)
   }
 
+  /**
+   * Parse the config file and add the necessary path variable.
+   */
+  def parseConfigAddPath(configFile: String): Config = {
+    val file = new File(configFile)
+    ConfigFactory.parseFile(file).withValue("path", ConfigValueFactory.fromAnyRef(file.getParentFile.getAbsolutePath))
+  }
+
   "parseCommands" should "throw an exception when given a config missing the topnotch namespace" taggedAs(tnEngineTag, parseConfigTag) in {
     intercept[IllegalArgumentException] {
       engine.parseCommands(ConfigFactory.empty()) shouldBe Seq()
@@ -107,36 +115,36 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   }
 
   it should "return None when the topnotch namespace is empty" taggedAs(tnEngineTag, parseConfigTag) in {
-    engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/emptyPlan.json")) shouldBe Seq()
+    engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/emptyPlan.json")) shouldBe Seq()
   }
 
   it should "return an error when referencing a nonexistant command" taggedAs(tnEngineTag, parseConfigTag) in {
-    shouldContainNErrors(engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/noCmdPlan.json")), 1)
+    shouldContainNErrors(engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/noCmdPlan.json")), 1)
   }
 
   it should "return an error when referencing a nonexistant file" taggedAs(tnEngineTag, parseConfigTag) in {
-    shouldContainNErrors(engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/noFilePlan.json")), 1)
+    shouldContainNErrors(engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/noFilePlan.json")), 1)
   }
 
   it should "return an error when referencing a nonexistant variable" taggedAs(tnEngineTag, parseConfigTag) in {
-    shouldContainNErrors(engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/noVarPlan.json")), 1)
+    shouldContainNErrors(engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/noVarPlan.json")), 1)
   }
 
   it should "return an error when referencing a variable before it is defined" taggedAs(tnEngineTag, parseConfigTag) in {
-    shouldContainNErrors(engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/tooEarlyVarPlan.json")), 1)
+    shouldContainNErrors(engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/tooEarlyVarPlan.json")), 1)
   }
 
   it should "return two errors when two of three commands are invalid" taggedAs(tnEngineTag, parseConfigTag) in {
-    shouldContainNErrors(engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/twoThirdsInvalidPlan.json")), 2, 1)
+    shouldContainNErrors(engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/twoThirdsInvalidPlan.json")), 2, 1)
   }
 
   it should "parse a correct, one command plan correctly" taggedAs(tnEngineTag, parseConfigTag) in {
-    engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/oneCorrectPlan.json")) shouldBe oneCorrectPlan
+    engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/oneCorrectPlan.json")) shouldBe oneCorrectPlan
   }
 
   it should "correctly parse a plan that includes diff, assertion, and view commands and that references and " +
     "stores cached and uncached variables" taggedAs(tnEngineTag, parseConfigTag) in {
-    engine.parseCommands(ConfigFactory.load("com/bfm/topnotch/tnengine/completePlan.json")) shouldBe completePlan
+    engine.parseCommands(parseConfigAddPath("src/test/resources/com/bfm/topnotch/tnengine/completePlan.json")) shouldBe completePlan
   }
 
   "getInputDF" should "handle csv input data" taggedAs(tnEngineTag, getInputDFTag) in {

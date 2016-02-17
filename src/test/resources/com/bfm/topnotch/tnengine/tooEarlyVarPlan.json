@@ -2,7 +2,7 @@
   "topnotch": [
     {
       "command": "view",
-      "externalParamsFile": "com/bfm/topnotch/tnengine/testView.json",
+      "externalParamsFile": "testView.json",
       "inputs": [
         {
           "ref": "invalidVar",

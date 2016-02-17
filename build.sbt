@@ -1,6 +1,6 @@
 name := "topnotch"
 
-version := "1.0"
+version := "0.1"
 
 scalaVersion := "2.10.6"
 
@@ -13,6 +13,7 @@ resolvers ++= Seq(
 
 SbtSparkSubmit.sparkTopNotchSettings
 
+test in assembly := {}
 
 parallelExecution in Test := false
 

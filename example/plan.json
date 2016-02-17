@@ -4,11 +4,11 @@
       "command": "assertion",
       "externalParamsFile": "assertions.json",
       "input": {
-        "ref": "topnotch/exampleAssertionInput.parquet",
+        "ref": "example/exampleAssertionInput.parquet",
         "onDisk": true
       },
       "outputKey": "exampleAssertionReport",
-      "outputPath": "topnotch/exampleAssertionOutput.parquet"
+      "outputPath": "example/exampleAssertionOutput.parquet"
     }
   ]
 }

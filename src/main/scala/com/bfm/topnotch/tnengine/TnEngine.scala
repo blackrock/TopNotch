@@ -4,17 +4,18 @@ import com.bfm.topnotch.tnengine.TnCmdStrings._
 import com.databricks.spark.csv.CsvParser
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.{SparkContext, SparkConf, Logging}
-import com.typesafe.config.Config
+import com.typesafe.config.{ConfigValueFactory, Config, ConfigFactory}
 import com.bfm.topnotch.tnassertion.{TnAssertionCmd, TnAssertionRunner}
 import com.bfm.topnotch.tndiff.{TnDiffCmd, TnDiffCreator}
 import com.bfm.topnotch.tnview.{TnViewCmd, TnViewCreator}
 import org.apache.spark.sql.{SaveMode, DataFrame, SQLContext}
 import org.apache.spark.sql.hive.HiveContext
-import com.typesafe.config.ConfigFactory
 import net.ceedubs.ficus.Ficus._
 import net.ceedubs.ficus.readers.ArbitraryTypeReader._
 import scala.collection.mutable.{Map => MMap, Set => MSet}
 import scala.collection.JavaConversions.asScalaBuffer
+import scala.io.Source
+import java.io.File
 
 /**
  * The entry for Spark into TopNotch.
@@ -28,11 +29,6 @@ object TnEngine extends Logging {
     }
     if (!conf.contains("spark.app.name")) {
       conf.setAppName(getClass.getName)
-    }
-    //There should only be 1 argument, the path to the plan config file
-    if (args.length != 1) {
-      throw new IllegalArgumentException("TopNotch accepts exactly 1 argument: the name of the plan config file. \n" +
-        s"The arguments were: ${args.reduce(_ + " , " + _)}")
     }
 
     new TnEngine(new HiveContext(new SparkContext(conf))).run(args(0))
@@ -55,7 +51,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
   def run(configFile: String): Unit = {
     log.info("parsing configurations")
 
-    val rootConfig = ConfigFactory.load(configFile)
+    val rootConfig = getConfigFromFile(configFile)
     val cmds = parseCommands(rootConfig)
 
     val errorsStr = collectErrors(cmds)
@@ -66,6 +62,32 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
     log.info("parsing successful, running commands")
     val persister = getPersister(rootConfig)
     executeCommands(cmds, new TnAssertionRunner(persister), new TnDiffCreator(), new TnViewCreator(sqlContext))
+  }
+
+  /**
+   * Get a TypeSafe Config object from a file uploaded with the --files flag.
+   * This handles the inconsistency of the --files flag with regard to whether the master is local or on an executor
+   * @param filePath The path to the config object on the master
+   * @param referrer The config referencing the one to load. This is none if loading the plan. Loading is done relative to referrer, if it is present.
+   * @return the config object
+   */
+  private def getConfigFromFile(filePath: String, referrer: Option[Config] = None): Config = {
+    val localFile = if (referrer.isEmpty) new File(filePath) else new File(referrer.get.as[String]("path"), filePath)
+    val executorFile = new File(localFile.getName)
+
+    // if the driver is running locally, get the file with the path provided by the users
+    if (localFile.exists()) {
+      ConfigFactory.parseFile(localFile)
+        .withValue("path", ConfigValueFactory.fromAnyRef(localFile.getParentFile.getAbsolutePath))
+    }
+    // otherwise, try to get the file from the working directory
+    else if (executorFile.exists()) {
+      ConfigFactory.parseFile(executorFile)
+        .withValue("path", ConfigValueFactory.fromAnyRef(executorFile.getParentFile.getAbsolutePath))
+    }
+    else {
+      throw new IllegalArgumentException(s"Can't find file $filePath.")
+    }
   }
 
   /**
@@ -206,8 +228,8 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
         // I wrap this all in another namespace because the as command must be called one namespace level up from the
         // one it is converting to a case class
         val mergedWithExternalParams = ConfigFactory.empty().withValue(wrapper,
-            cmdConfig.withValue(paramsStr, ConfigFactory.load(cmdConfig.getString(externalParamsStr)).getObject(tnNamespace))
-              .root()
+            cmdConfig.withValue(paramsStr, getConfigFromFile(cmdConfig.getString(externalParamsStr), Some(rootConfig))
+              .getObject(tnNamespace)).root()
         )
         cmdConfig.as[String](commandStr) match {
           case "assertion" => {
