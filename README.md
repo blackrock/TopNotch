@@ -1,6 +1,6 @@
 # TopNotch
 
-[![Build Status](https://travis-ci.org/blackrock/TopNotch.svg?branch=master)](https://travis-ci.org/blackrock/TopNotch) [![Coverage Status](https://coveralls.io/repos/github/blackrock/TopNotch/badge.svg?branch=master)](https://coveralls.io/github/blackrock/TopNotch?branch=master)
+[![Build Status](https://travis-ci.org/blackrock/TopNotch.svg?branch=master)](https://travis-ci.org/blackrock/TopNotch) [![codecov.io](https://codecov.io/github/blackrock/TopNotch/coverage.svg?branch=master)](https://codecov.io/github/blackrock/TopNotch?branch=master)
 
 ## What Is TopNotch?
 
