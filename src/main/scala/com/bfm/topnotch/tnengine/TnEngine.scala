@@ -46,6 +46,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Parse a plan file and then run the desired commands
+ *
    * @param configFile The name of the plan file to load
    */
   def run(configFile: String): Unit = {
@@ -67,6 +68,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
   /**
    * Get a TypeSafe Config object from a file uploaded with the --files flag.
    * This handles the inconsistency of the --files flag with regard to whether the master is local or on an executor
+ *
    * @param filePath The path to the config object on the master
    * @param referrer The config referencing the one to load. This is none if loading the plan. Loading is done relative to referrer, if it is present.
    * @return the config object
@@ -92,6 +94,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Collect all the TnErrorCmds in a TnCmd sequence into one error string
+ *
    * @param cmds The commands to check for errors
    * @return None if there are no errors or the merged string to throw if there are errors.
    */
@@ -108,10 +111,11 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Get the input data, either from the lookup table or from disk
+ *
    * @param input The input to get
    * @return The input data set as a dataframe
    */
-  protected[tnengine] def getInputDF(input: Input): DataFrame = {
+  protected[tnengine] def getInputDF(input: TnInput): DataFrame = {
     //errors with variable definition should have already been caught in parseConfig, so not looking hard here.
     if (input.onDisk) {
       //look for delimiter, If none is provided , treat the input file as parquet
@@ -133,6 +137,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Execute a sequence of commands
+ *
    * @param cmds The commands to execute
    * @param assertionRunner The instance of TnAssertionRunner to use to run the assertion commands
    * @param diffCreator The instance of TnDiffCreator to use to run the diff commands
@@ -143,6 +148,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
     /**
      * Store the output dataframe in the lookup table or on disk as specified in the command
+ *
      * @param output The output to store
      * @param cmd The command that generated it
      */
@@ -167,6 +173,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Get the appropriate persister object depending on the configuration file
+ *
    * @param rootConfig The root of the config file
    */
   protected[tnengine] def getPersister(rootConfig: Config): TnPersister = {
@@ -186,6 +193,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
 
   /**
    * Parse the given config file for commands and report all valid or invalid commands
+ *
    * @param rootConfig The root of the config file
    * @return The list of commands, either valid commands to run or errors of incorrectly specified commands
    */
@@ -203,7 +211,7 @@ class TnEngine(sqlContext: SQLContext) extends Logging {
      * @param inputs The input refs to check
      * @param cmd The command which uses the input refs
      */
-    def inputValidityCheck(inputs: Seq[Input], cmd: TnCmd): Unit = {
+    def inputValidityCheck(inputs: Seq[TnInput], cmd: TnCmd): Unit = {
       val invalidList = inputs.map(v => ((definedOutputKeys.contains(v.ref) || (fs.exists(new Path(v.ref)) && v.onDisk)), v.ref))
         .filter(_._1 == false)
       if (invalidList.isEmpty) {

@@ -1,6 +1,6 @@
 package com.bfm.topnotch.tnengine
 
-import com.bfm.topnotch.tnassertion.{AssertionSeq, TnAssertionCmd, TnAssertionParams, TnAssertionRunner}
+import com.bfm.topnotch.tnassertion.{TnAssertionSeq, TnAssertionCmd, TnAssertionParams, TnAssertionRunner}
 import com.bfm.topnotch.tndiff.{TnDiffInput, TnDiffParams, TnDiffCmd, TnDiffCreator}
 import com.bfm.topnotch.tnview.{TnViewParams, TnViewCmd, TnViewCreator}
 import com.typesafe.config.{ConfigValueFactory, ConfigFactory, Config}
@@ -37,7 +37,7 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   val completePlan = Seq[TnCmd](
     TnViewCmd(
       TnViewParams(Seq("loanData"), "select * from loanData"),
-      Seq(Input("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true)),
+      Seq(TnInput("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true)),
       "viewKey",
       true
     ),
@@ -46,9 +46,9 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
         TnDiffInput(Seq("loanID", "poolNum"), Seq("loanBal")),
         TnDiffInput(Seq("loanIDOld", "poolNumOld"), Seq("loanBalOld"))
       ),
-      Input("src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet", true),
+      TnInput("src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet", true),
       "cur",
-      Input("src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet", true),
+      TnInput("src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet", true),
       "old",
       false,
       "diffKey",
@@ -57,13 +57,13 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
       Some("target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/diffOutput.parquet")
     ),
     TnAssertionCmd(
-      AssertionSeq(
+      TnAssertionSeq(
         Seq(
           TnAssertionParams("loanBal > 0", "Loan balances are positive", 0.01),
           TnAssertionParams("loanBal > 1", "Loan balances are greater than 1", 0.02)
         )
       ),
-      Input("viewKey", false),
+      TnInput("viewKey", false),
       "assertionKey",
       false,
       Some("target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet")
@@ -78,7 +78,8 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
 
   /**
    * Verify that a seq of cmd objects has N errors.
-   * @param cmds the list of parsed commands
+    *
+    * @param cmds the list of parsed commands
    * @param numErrors the number of errors to have
    * @param numNotErrors the number of not erroneous commands to have, default is all are errors
    */
@@ -148,7 +149,7 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   }
 
   "getInputDF" should "handle csv input data" taggedAs(tnEngineTag, getInputDFTag) in {
-    val df = engine.getInputDF(Input("src/test/resources/com/bfm/topnotch/tnengine/rawTest.csv", true, ","))
+    val df = engine.getInputDF(TnInput("src/test/resources/com/bfm/topnotch/tnengine/rawTest.csv", true, ","))
     df.count() shouldBe 4
   }
 

@@ -18,7 +18,7 @@ abstract class TnCmd {
  * @param onDisk Whether the input data set is stored on disk
  * @param delimiter The delimiter for plain text, delimited files. Leave to empty string for parquet.
  */
-case class Input(ref: String, onDisk: Boolean, delimiter: String = "")
+case class TnInput(ref: String, onDisk: Boolean, delimiter: String = "")
 
 /**
  * The strings used for converting a config file into a TnCmd

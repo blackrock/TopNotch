@@ -1,9 +1,10 @@
 package com.bfm.topnotch.tndiff
 
-import com.bfm.topnotch.tnengine.{Input, TnCmd}
+import com.bfm.topnotch.tnengine.{TnInput, TnCmd}
 
 /**
  * The class for a diff command
+ *
  * @param params The object containing the parameters for the command
  * @param input1 The first input to the diff command
  * @param input1Name The name to use to reference the first input
@@ -13,20 +14,21 @@ import com.bfm.topnotch.tnengine.{Input, TnCmd}
  * @param numericThreshold The default threshold to use for determining if numeric values are equal.
  */
 case class TnDiffCmd (
-                           params: TnDiffParams,
-                           input1: Input,
-                           input1Name: String,
-                           input2: Input,
-                           input2Name: String,
-                           filterEqualRows: Boolean = false,
-                           outputKey: String,
-                           cache: Boolean = false,
-                           numericThreshold: Double = 1e-6,
-                           outputPath: Option[String] = None
+                       params: TnDiffParams,
+                       input1: TnInput,
+                       input1Name: String,
+                       input2: TnInput,
+                       input2Name: String,
+                       filterEqualRows: Boolean = false,
+                       outputKey: String,
+                       cache: Boolean = false,
+                       numericThreshold: Double = 1e-6,
+                       outputPath: Option[String] = None
                            ) extends TnCmd
 
 /**
  * The parameters to a diff operation, independent of the input and output data.
+ *
  * @param input1Columns The columns of the first input to join and diff on
  * @param input2Columns The columns of the second input to join and diff on
  * @param columnThreshold The threshold for which numeric values should be considered equal. This array, if set,
