@@ -76,7 +76,7 @@ Here is a basic example of TopNotch. It is a _plan_ which contains one _command_
 
 ## Full Technical Details
 
-Go to (will insert link here when hosting name determine) to see the scaladocs.
+Go to http://blackrock.github.io/TopNotch to see the Scaladocs.
 
 ### Terminology
 - Dataframe: A nested, tabular data set
