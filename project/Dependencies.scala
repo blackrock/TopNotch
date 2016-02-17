@@ -14,7 +14,7 @@ object Dependencies {
   object Bundles {
     import Versions._
 
-    val sparkDeps = Seq("spark-hive", "spark-yarn").map(
+    val sparkDeps = Seq("spark-core", "spark-sql", "spark-hive", "spark-yarn").map(
       m => "org.apache.spark" %% m % sparkVer % "provided"
     )
 
