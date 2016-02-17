@@ -1,5 +1,7 @@
 # TopNotch
 
+[![Build Status](https://travis-ci.org/blackrock/TopNotch.svg?branch=master)](https://travis-ci.org/blackrock/TopNotch) [![Coverage Status](https://coveralls.io/repos/github/blackrock/TopNotch/badge.svg?branch=master)](https://coveralls.io/github/blackrock/TopNotch?branch=master)
+
 ## What Is TopNotch?
 
 TopNotch is a system for quality controlling large scale data sets. It addresses the following three problems:
