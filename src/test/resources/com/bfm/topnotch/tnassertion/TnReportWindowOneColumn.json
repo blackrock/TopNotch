@@ -1,0 +1,30 @@
+{
+  "query": "Success = true",
+  "description": "Description",
+  "threshold": 0.5,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [
+    {"window1": 1, "order1": 2.0, "success": false},
+    {"window1": 1, "order1": 4.0, "success": false},
+    {"window1": 1, "order1": 6.0, "success": false}
+  ],
+  "sampleWindows": [
+    [
+      {"window1": 1, "order1": 2.0, "success": false},
+      {"window1": 1, "order1": 4.0, "success": false},
+      {"window1": 1, "order1": 6.0, "success": false}
+    ],
+    [
+      {"window1": 1, "order1": 2.0, "success": false},
+      {"window1": 1, "order1": 4.0, "success": false},
+      {"window1": 1, "order1": 6.0, "success": false}
+    ],
+    [
+      {"window1": 1, "order1": 2.0, "success": false},
+      {"window1": 1, "order1": 4.0, "success": false},
+      {"window1": 1, "order1": 6.0, "success": false}
+    ]
+  ],
+  "userSummaryStatistics": {}
+}

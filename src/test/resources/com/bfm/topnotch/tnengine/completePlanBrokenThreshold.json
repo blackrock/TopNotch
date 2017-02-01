@@ -1,0 +1,46 @@
+{
+  "io": {
+    "writer": "hdfs",
+    "dest": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/"
+  },
+  "commands": [
+    {
+      "command": "view",
+      "externalParamsFile": "testView.json",
+      "inputs": [
+        {
+          "ref": "src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet",
+          "onDisk": true
+        }
+      ],
+      "outputKey": "viewKey",
+      "cache": true
+    },
+    {
+      "command": "diff",
+      "externalParamsFile": "testDiff.json",
+      "input1": {
+        "ref": "src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet",
+        "onDisk": true
+      },
+      "input1Name": "cur",
+      "input2": {
+        "ref": "src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet",
+        "onDisk": true
+      },
+      "input2Name": "old",
+      "outputKey": "diffKey",
+      "outputPath": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/diffOutput.parquet"
+    },
+    {
+      "command": "assertion",
+      "externalParamsFile": "testAssertionFailure.json",
+      "input": {
+        "ref": "viewKey",
+        "onDisk": false
+      },
+      "outputKey": "assertionKey",
+      "outputPath": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet"
+    }
+  ]
+}

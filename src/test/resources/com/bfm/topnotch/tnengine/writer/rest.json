@@ -1,0 +1,6 @@
+{
+  "io": {
+    "writer": "rest",
+    "dest": "http://www.testurl.com"
+  }
+}

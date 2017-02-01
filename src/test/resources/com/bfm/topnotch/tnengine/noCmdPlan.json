@@ -1,5 +1,5 @@
 {
-  "topnotch": [
+  "commands": [
     {
       "command": "not a valid command",
       "externalParamsFile": "testView.json",

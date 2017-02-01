@@ -3,20 +3,24 @@ package com.bfm.topnotch
 import org.apache.hadoop.hbase.CellUtil
 import org.apache.hadoop.hbase.client.{HConnection, HTableInterface, Put}
 import org.apache.spark._
-import org.apache.spark.sql.SQLContext
+import org.apache.spark.sql.SparkSession
 import org.scalamock.scalatest.MockFactory
 import org.scalatest.FlatSpec
+import com.typesafe.scalalogging.StrictLogging
 
 /**
- * This class handles some of the boilerplate of testing SparkApplications with HBase persisters
+ * This class handles some of the boilerplate of testing SparkApplications with HBase writers
  */
-abstract class SparkApplicationTester extends FlatSpec with MockFactory with Logging with SharedSparkContext {
+abstract class SparkApplicationTester extends FlatSpec with MockFactory with StrictLogging with SharedSparkContext {
   protected val hconn = mock[HConnection]
-  lazy protected val sqlContext = new SQLContext(sc) {
-    setConf("spark.sql.shuffle.partitions", "4")
+  lazy val spark = SparkSession
+    .builder()
+    .appName(getClass.getName)
+    .master("local")
+    .config("spark.sql.shuffle.partitions", "4")
     //setting this to false to emulate HiveQL's case insensitivity for column names
-    setConf("spark.sql.caseSensitive", "false")
-  }
+    .config("spark.sql.caseSensitive", "false")
+    .getOrCreate()
 
   /**
    * Verify that one the next HTable will receive the correct puts. Call this once per HTable that is supposed to be created and written to.
@@ -40,10 +44,10 @@ abstract class SparkApplicationTester extends FlatSpec with MockFactory with Log
                 val actualValue = CellUtil.cloneValue(actualPut.get(correctPut.columnFamily, correctPut.columnQualifier).get(0))
                 val eqResult = java.util.Arrays.equals(actualPut.getRow, correctPut.row) && correctPut.valueTest(actualValue)
                 if (!eqResult) {
-                  log.error("A put is incorrect.")
-                  log.error("Actual value: " + correctPut.valueToString(
+                  logger.error("A put is incorrect.")
+                  logger.error("Actual value: " + correctPut.valueToString(
                     CellUtil.cloneValue(actualPut.get(correctPut.columnFamily, correctPut.columnQualifier).get(0))))
-                  log.error("Correct value: " + correctPut.valueToString(correctPut.value))
+                  logger.error("Correct value: " + correctPut.valueToString(correctPut.value))
                 }
                 eqResult
             })

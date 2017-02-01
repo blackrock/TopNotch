@@ -1,16 +1,14 @@
-{
-  "topnotch": [
-    {
-      "command": "view",
-      "externalParamsFile": "testView.json",
-      "inputs": [
-        {
-          "ref": "invalidVar",
-          "onDisk": false
-        }
-      ],
-      "outputKey": "invalidVar",
-      "cache": true
-    }
-  ]
-}
+{"commands":[
+  {
+    "command": "view",
+    "externalParamsFile": "testView.json",
+    "inputs": [
+      {
+        "ref": "invalidVar",
+        "onDisk": false
+      }
+    ],
+    "outputKey": "invalidVar",
+    "cache": true
+  }
+]}

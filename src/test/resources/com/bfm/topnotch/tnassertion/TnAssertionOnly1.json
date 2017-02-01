@@ -1,7 +1,5 @@
 {
-  "topnotch": {
-    "query": "Ints = 1",
-    "description": "This rule filters all values for int other than 1.",
-    "threshold": 0.5
-  }
+  "query": "Ints = 1",
+  "description": "This rule filters all values for int other than 1.",
+  "threshold": 0.5
 }

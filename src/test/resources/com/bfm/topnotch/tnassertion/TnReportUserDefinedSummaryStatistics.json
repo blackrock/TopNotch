@@ -1,0 +1,19 @@
+{
+  "query": "Ints < 4",
+  "description": "Description",
+  "threshold": 0.1,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [
+    {
+      "ints": 1
+    },
+    {
+      "ints": 3
+    }
+  ],
+  "sampleWindows": [],
+  "userSummaryStatistics": {
+    "intAvg": 2
+  }
+}

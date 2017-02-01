@@ -1,0 +1,40 @@
+{
+  "commands": [
+    {
+      "command": "view",
+      "externalParamsFile": "testView.json",
+      "inputs": [
+        {
+          "ref": "src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet",
+          "onDisk": true
+        }
+      ],
+      "outputKey": "viewKey",
+      "cache": true
+    },
+    {
+      "command": "view",
+      "externalParamsFile": "testView.json",
+      "inputs": [
+        {
+          "ref": "viewKey",
+          "onDisk": false
+        }
+      ],
+      "outputKey": "viewKey2",
+      "cache": true
+    },
+    {
+      "command": "view",
+      "externalParamsFile": "testView.json",
+      "inputs": [
+        {
+          "ref": "viewKey",
+          "onDisk": false
+        }
+      ],
+      "outputKey": "viewKey3",
+      "cache": true
+    }
+  ]
+}

@@ -4,8 +4,10 @@
 /.idea
 /bin/*.jar
 /bin/jq-linux64
+/topnotch/
 derby.log
 metastore_db/
-topnotch/
 exampleAssertionOutput.parquet
 exampleAssertionReport
+dependency-reduced-pom.xml
+*.iml

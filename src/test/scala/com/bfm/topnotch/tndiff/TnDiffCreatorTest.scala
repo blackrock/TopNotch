@@ -102,13 +102,13 @@ class TnDiffCreatorTest extends SparkApplicationTester with Matchers {
    * null means that the data frame contains the data points with nulls. noNull means that the data frame contains
    * the data points with no nulls. twoPoint means that the dataframe contains both
    */
-  lazy val twoPointNumericDf = sqlContext.createDataFrame(Seq(numericAllFilledTestPoint, numericHalfFilledTestPoint)).cache
+  lazy val twoPointNumericDf = spark.createDataFrame(Seq(numericAllFilledTestPoint, numericHalfFilledTestPoint)).cache
 
   lazy val noNullNumericDf = twoPointNumericDf.filter(col("byte2").isNotNull).cache
 
   lazy val nullNumericDf = twoPointNumericDf.filter(col("byte2").isNull).cache
 
-  lazy val twoPointOtherDf = sqlContext.createDataFrame(Seq(otherAllFilledTestPoint, otherHalfFilledTestPoint)).cache
+  lazy val twoPointOtherDf = spark.createDataFrame(Seq(otherAllFilledTestPoint, otherHalfFilledTestPoint)).cache
 
   lazy val noNullOtherDf = twoPointOtherDf.filter(col("string2").isNotNull).cache
 
@@ -128,25 +128,25 @@ class TnDiffCreatorTest extends SparkApplicationTester with Matchers {
   /**
    * The dataframes holding the equal points
    */
-  lazy val numericEqualityDf = sqlContext.createDataFrame(Seq(numericEqualityTestPoint))
+  lazy val numericEqualityDf = spark.createDataFrame(Seq(numericEqualityTestPoint))
 
-  lazy val otherEqualityDf = sqlContext.createDataFrame(Seq(otherEqualityTestPoint))
+  lazy val otherEqualityDf = spark.createDataFrame(Seq(otherEqualityTestPoint))
 
-  lazy val numericThresholdTestDf = sqlContext.createDataFrame(Seq(numericThresholdPoint))
+  lazy val numericThresholdTestDf = spark.createDataFrame(Seq(numericThresholdPoint))
 
-  lazy val numericThresholdTestDfPerturbed = sqlContext.createDataFrame(Seq(numericThresholdPoint.perturb(1e-6)))
+  lazy val numericThresholdTestDfPerturbed = spark.createDataFrame(Seq(numericThresholdPoint.perturb(1e-6)))
 
   /**
    * The dataframe for testing points of different types
     */
-  lazy val mixDf = sqlContext.createDataFrame(Seq(MixTestClass(1, Some(BigDecimal(1)), Some(Map((23, 2))))))
+  lazy val mixDf = spark.createDataFrame(Seq(MixTestClass(1, Some(BigDecimal(1)), Some(Map((23, 2))))))
 
   /**
    * These dataframes are useful as they allow for testing non-unique keys
    */
-  lazy val currentLoansDF = sqlContext.read.parquet(getClass.getResource("currentLoans.parquet").getFile).cache
+  lazy val currentLoansDF = spark.read.parquet(getClass.getResource("currentLoans.parquet").getFile).cache
 
-  lazy val oldLoansDF = sqlContext.read.parquet(getClass.getResource("oldLoans.parquet").getFile).cache
+  lazy val oldLoansDF = spark.read.parquet(getClass.getResource("oldLoans.parquet").getFile).cache
   
 
   /**
@@ -441,5 +441,15 @@ class TnDiffCreatorTest extends SparkApplicationTester with Matchers {
         lit(diffStr).as(equalityColName(s"t1${colJoin}decimal1", s"t2${colJoin}decimal1"))
       )
     )
+  }
+
+  it should "be able to compare nested data without crashing" taggedAs generateDiffTag in {
+    val diffDf = diffCreator.createDiff(otherEqualityDf, "t1", otherEqualityDf, "t2",
+      TnDiffParams(TnDiffInput(Seq("id"), Seq("struct1.int")), TnDiffInput(Seq("id"), Seq("struct1.int"))), filterEqualRows = true)
+    dfEquals(diffDf, twoPointOtherDf.where(lit(false)).select(
+      col("id").as(s"t1${colJoin}id"), col("id").as(s"t2${colJoin}id"),
+      col("struct1.int").as(s"t1${colJoin}struct1.int"), col("struct1.int").as(s"t2${colJoin}struct1.int"),
+      lit(0).as(minusColName(s"t1${colJoin}struct1.int", s"t2${colJoin}struct1.int")),
+      lit(equalStr).as(equalityColName(s"t1${colJoin}struct1.int", s"t2${colJoin}struct1.int"))))
   }
 }

@@ -1,5 +1,9 @@
 {
-  "topnotch": [
+  "io": {
+    "writer": "hdfs",
+    "dest": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/"
+  },
+  "commands": [
     {
       "command": "view",
       "externalParamsFile": "testView.json",
@@ -26,7 +30,7 @@
       },
       "input2Name": "old",
       "outputKey": "diffKey",
-      "outputPath": "target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/diffOutput.parquet"
+      "outputPath": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/diffOutput.parquet"
     },
     {
       "command": "assertion",
@@ -36,7 +40,7 @@
         "onDisk": false
       },
       "outputKey": "assertionKey",
-      "outputPath": "target/scala-2.10/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet"
+      "outputPath": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet"
     }
   ]
 }

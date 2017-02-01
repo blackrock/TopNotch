@@ -10,8 +10,8 @@ import org.scalatest.{Matchers, Tag}
 class TnViewCreatorTest extends SparkApplicationTester with Matchers {
   import TnTestHelper._
 
-  lazy val tnViewCreator = new TnViewCreator(sqlContext)
-  lazy val df = sqlContext.read.parquet(getClass.getResource("currentLoans.parquet").getFile).cache
+  lazy val tnViewCreator = new TnViewCreator(spark)
+  lazy val df = spark.read.parquet(getClass.getResource("currentLoans.parquet").getFile).cache
 
   /**
    * The tags

@@ -1,11 +1,14 @@
 {
-  "Query": "iNTs = 1",
-  "Description": "Description",
-  "Threshold": 0.1,
-  "FractionBad": 2.0,
-  "SampleBad": [
+  "query": "iNTs = 1",
+  "description": "Description",
+  "threshold": 0.1,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [
     {
       "ints": 1
     }
-  ]
+  ],
+  "sampleWindows": [],
+  "userSummaryStatistics": {}
 }

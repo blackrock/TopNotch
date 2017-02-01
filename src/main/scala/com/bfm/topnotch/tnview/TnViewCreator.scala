@@ -1,14 +1,15 @@
 package com.bfm.topnotch.tnview
 
-import org.apache.spark.sql.{DataFrame, SQLContext}
+import org.apache.spark.sql.DataFrame
+import org.apache.spark.sql.SparkSession
 
 
 /**
  * The class for combining multiple data sets into one that can be used as an input to the diff and assertion commands.
  * This one data set is a "view" of the many used to create it.
- * @param sqlContext The sqlContext to use for creating views
+ * @param spark The SparkSession to use for creating views
  */
-class TnViewCreator(sqlContext: SQLContext) {
+class TnViewCreator(spark: SparkSession) {
 
   /**
    * Create a view using from multiple data sets using a sql statement
@@ -19,14 +20,8 @@ class TnViewCreator(sqlContext: SQLContext) {
   def createView(inputs: Seq[DataFrame], params: TnViewParams): DataFrame = {
     // register the views as temporary tables accessible from sql queries
     inputs.zip(params.tableAliases).foreach{
-      case (view, name) => view.registerTempTable(name)
+      case (view, name) => view.createOrReplaceTempView(name)
     }
-
-    val outputDF = sqlContext.sql(params.query)
-
-    // remove the temp tables to avoid cluttering the namespace
-    params.tableAliases.foreach(sqlContext.dropTempTable(_))
-
-    outputDF
+    spark.sql(params.query)
   }
 }

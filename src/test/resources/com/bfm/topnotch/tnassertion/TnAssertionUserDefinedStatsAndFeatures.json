@@ -1,0 +1,13 @@
+{
+  "query": "Ints < 4",
+  "userDefinedSummaryExpr": {
+    "maxOfIntsDoublesSum": "max(Ints + Doubles)",
+    "avgOfStringsLength": "avg(length(Strings))"
+  },
+  "description": "This rule does no filtering. Every data point passes.",
+  "userDefinedFeatures": {
+    "intsDoublesSum": "Ints + Doubles",
+    "stringsLength": "length(Strings)"
+  },
+  "threshold": 0.0
+}

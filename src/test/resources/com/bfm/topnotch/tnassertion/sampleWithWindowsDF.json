@@ -1,0 +1,6 @@
+{"Window1": 1, "Window2": "win1", "Order1": 4.0, "Order2": "a", "Success": false, "NotForOrdering": 1}
+{"Window1": 1, "Window2": "win1", "Order1": 6.0, "Order2": "b", "Success": false, "NotForOrdering": 2}
+{"Window1": 1, "Window2": "win2", "Order1": 2.0, "Order2": "c", "Success": false, "NotForOrdering": 3}
+{"Window1": 2, "Window2": "win3", "Order1": 10.0, "Order2": "f", "Success": null, "NotForOrdering": 4}
+{"Window1": 2, "Window2": "win3", "Order1": 8.0, "Order2": "d", "Success": true, "NotForOrdering": 5}
+{"Window1": 2, "Window2": "win3", "Order1": 10.0, "Order2": "e", "Success": true, "NotForOrdering": 6}

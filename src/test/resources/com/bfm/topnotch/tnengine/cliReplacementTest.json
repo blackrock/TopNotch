@@ -1,0 +1,4 @@
+{
+  "${var1}ToBeReplaced": true,
+  "replaceThisValue": "${var2}"
+}

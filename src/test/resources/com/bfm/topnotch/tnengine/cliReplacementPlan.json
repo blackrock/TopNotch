@@ -1,0 +1,18 @@
+{
+  "io": {
+    "writer": "hdfs",
+    "dest": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/"
+  },
+  "commands": [
+    {
+      "command": "assertion",
+      "externalParamsFile": "testAssertion.json",
+      "input": {
+        "ref": "${fileNameToReplace}",
+        "onDisk": true
+      },
+      "outputKey": "assertionKey",
+      "outputPath": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet"
+    }
+  ]
+}

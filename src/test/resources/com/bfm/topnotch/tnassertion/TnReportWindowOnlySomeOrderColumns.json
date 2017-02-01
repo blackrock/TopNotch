@@ -1,0 +1,30 @@
+{
+  "query": "Success = true and NotForOrdering <= 0",
+  "description": "Description",
+  "threshold": 0.5,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [
+    {"window1": 1, "order1": 2.0, "success": false, "notforordering": 3},
+    {"window1": 1, "order1": 4.0, "success": false, "notforordering": 1},
+    {"window1": 1, "order1": 6.0, "success": false, "notforordering": 2}
+  ],
+  "sampleWindows": [
+    [
+      {"window1": 1, "order1": 2.0, "success": false, "notforordering": 3},
+      {"window1": 1, "order1": 4.0, "success": false, "notforordering": 1},
+      {"window1": 1, "order1": 6.0, "success": false, "notforordering": 2}
+    ],
+    [
+      {"window1": 1, "order1": 2.0, "success": false, "notforordering": 3},
+      {"window1": 1, "order1": 4.0, "success": false, "notforordering": 1},
+      {"window1": 1, "order1": 6.0, "success": false, "notforordering": 2}
+    ],
+    [
+      {"window1": 1, "order1": 2.0, "success": false, "notforordering": 3},
+      {"window1": 1, "order1": 4.0, "success": false, "notforordering": 1},
+      {"window1": 1, "order1": 6.0, "success": false, "notforordering": 2}
+    ]
+  ],
+  "userSummaryStatistics": {}
+}

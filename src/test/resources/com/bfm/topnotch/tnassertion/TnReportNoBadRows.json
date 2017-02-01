@@ -1,7 +1,10 @@
 {
-  "Query": "",
-  "Description": "Description",
-  "Threshold": 0.1,
-  "FractionBad": 2.0,
-  "SampleBad": []
+  "query": "Ints != -7",
+  "description": "Description",
+  "threshold": 0.1,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [],
+  "sampleWindows": [],
+  "userSummaryStatistics": {}
 }

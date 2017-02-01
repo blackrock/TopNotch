@@ -6,10 +6,15 @@ package com.bfm.topnotch.tnengine
 abstract class TnCmd {
   /** The key to use to store the resulting dataframe in the lookup table */
   val outputKey: String
-  /** Whether to cache the resulting dataframe in memory */
-  val cache: Boolean
+  /** Whether to cache the resulting dataframe in memory. This should be a boolean defaulting to false,
+    * but json4s has a problem with default values other than None for option. Change it to a default value if json4s
+    * solves the bug. */
+  val cache: Option[Boolean]
   /** If writing the output to disk, the path to write to on hdfs, otherwise none */
   val outputPath: Option[String]
+  /** If writing the output in hdfs, the name of the table to mount, otherwise none. Note: this will be ignored if
+    * outputPath is not specified. */
+  val tableName: Option[String]
 }
 
 /**
@@ -18,18 +23,15 @@ abstract class TnCmd {
  * @param onDisk Whether the input data set is stored on disk
  * @param delimiter The delimiter for plain text, delimited files. Leave to empty string for parquet.
  */
-case class Input(ref: String, onDisk: Boolean, delimiter: String = "")
+case class Input(ref: String, onDisk: Boolean, delimiter: Option[String] = None)
 
 /**
  * The strings used for converting a config file into a TnCmd
  */
 object TnCmdStrings {
-  // use this string to namespace configs for io
-  val tnIONamespace = "topnotchIO"
-  val persisterStr = "persister"
-  // use this string to namespace command configs
-  val tnNamespace = "topnotch"
-  val wrapper = "wrapper"
+  val ioNamespace = "io"
+  val commandListStr = "commands"
+  val writerStr = "writer"
   val commandStr = "command"
   val paramsStr = "params"
   val externalParamsStr = "externalParamsFile"
@@ -40,6 +42,7 @@ object TnCmdStrings {
 
 /**
  * The class indicating that there was at least one error in the configuration for this command
+ * @param cmdString The JSON string for the command.
  * @param errorStr The errors encountered in creating this command.
  * @param cmdIdx The index of the command in the plan that failed
  * @param outputKey This is meaningless in this class. This exists only so that TnErrorCmd can extend TnCmd.
@@ -47,14 +50,16 @@ object TnCmdStrings {
  * @param outputPath This is meaningless in this class. This exists only so that TnErrorCmd can extend TnCmd.
  */
 case class TnErrorCmd (
+                            cmdString: String,
                             errorStr: String,
                             cmdIdx: Int,
                             outputKey: String = "",
-                            cache: Boolean = false,
+                            cache: Option[Boolean] = None,
                             writeToDisk: Boolean = false,
-                            outputPath: Option[String] = None
+                            outputPath: Option[String] = None,
+                            tableName: Option[String] = None
                             ) extends TnCmd {
   override def toString: String = {
-    s"There was an error with the command in position ${cmdIdx}. The message was: ${errorStr} \n\n"
+    s"There was an error with the command in position ${cmdIdx}. The command was: \n ${cmdString} \n The message was: ${errorStr} \n\n"
   }
 }

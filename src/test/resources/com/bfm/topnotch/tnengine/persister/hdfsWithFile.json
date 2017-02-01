@@ -1,6 +1,0 @@
-{
-  "topnotchIO": {
-    "persister": "hdfs",
-    "hdfsPath": "/user/testUser/"
-  }
-}

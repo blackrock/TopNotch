@@ -8,12 +8,13 @@ import com.bfm.topnotch.tnengine.{Input, TnCmd}
  * @param inputs The inputs to the View command
  */
 case class TnViewCmd (
-                           params: TnViewParams,
-                           inputs: Seq[Input],
-                           outputKey: String,
-                           cache: Boolean = false,
-                           outputPath: Option[String] = None
-                           ) extends TnCmd
+                       params: TnViewParams,
+                       inputs: Seq[Input],
+                       outputKey: String,
+                       cache: Option[Boolean] = None,
+                       outputPath: Option[String] = None,
+                       tableName: Option[String] = None
+                       ) extends TnCmd
 
 /**
  * The parameters to a view operation, independent of the input and output data.

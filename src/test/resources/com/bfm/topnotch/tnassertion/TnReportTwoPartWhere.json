@@ -1,9 +1,10 @@
 {
-  "Query": "Ints < 4 and Strings like \"Failure%\"",
-  "Description": "Description",
-  "Threshold": 0.1,
-  "FractionBad": 2.0,
-  "SampleBad": [
+  "query": "Ints < 4 and Strings like \"Failure%\"",
+  "description": "Description",
+  "threshold": 0.1,
+  "fractionInvalid": 2.0,
+  "numInvalid": 0,
+  "sampleInvalid": [
     {
       "ints": 1,
       "strings": "Failure1"
@@ -12,5 +13,7 @@
       "ints": 3,
       "strings": "Failure2"
     }
-  ]
+  ],
+  "sampleWindows": [],
+  "userSummaryStatistics": {}
 }

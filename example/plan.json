@@ -1,5 +1,5 @@
 {
-  "topnotch": [
+  "commands": [
     {
       "command": "assertion",
       "externalParamsFile": "assertions.json",

@@ -1,0 +1,6 @@
+{
+  "io": {
+    "writer": "hdfs",
+    "dest": "/user/testUser/"
+  }
+}
