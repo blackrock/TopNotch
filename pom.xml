@@ -8,11 +8,6 @@
     <name>${project.artifactId}</name>
     <description>A tool for systematically quality controlling large data sets.</description>
     <inceptionYear>2015</inceptionYear>
-    <parent>
-        <groupId>brs</groupId>
-        <artifactId>brs-parent</artifactId>
-        <version>1.0</version>
-    </parent>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
