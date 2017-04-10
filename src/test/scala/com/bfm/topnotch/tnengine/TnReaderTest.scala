@@ -13,6 +13,7 @@ class TnReaderTest extends SparkApplicationTester with Matchers {
 
   object getReaderTag extends Tag("getReader")
   object readerVariableTag extends Tag("readerVariables")
+  object jarReaderTag extends Tag("jarReader")
   implicit val formats = Serialization.formats(NoTypeHints)
 
   "getReader" should "throw an IllegalArgumentException when the plan doesn't exist" taggedAs(getReaderTag) in {

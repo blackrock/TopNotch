@@ -71,7 +71,7 @@ class TnRESTReader(baseURL: URL, variableDictionary: Map[String, String] = Map.e
 }
 
 /**
-  * An implementation of TnReader for reading configurations from a rest API.
+  * An implementation of TnReader for reading configurations from a file.
   * @param variableDictionary A dictionary for replacing variables in the configuration objects with values
   */
 class TnFileReader(variableDictionary: Map[String, String] = Map.empty) extends TnReader(variableDictionary) {
@@ -81,6 +81,8 @@ class TnFileReader(variableDictionary: Map[String, String] = Map.empty) extends 
     * driver's directory as the --files flag uploads it there in yarn-cluster mode.
     *
     * This handles the inconsistency of the --files flag with regard to whether the master is local or on an executor
+    *
+    * The field path is added to each AST so that if its a plan, it can refer to other commands relative to its own path
     *
     * @param configPath The path to the file to load
     * @param referrer The AST of the file that referenced the one at filePath. This is none if loading the plan.
@@ -102,9 +104,16 @@ class TnFileReader(variableDictionary: Map[String, String] = Map.empty) extends 
         parse(executorFile) merge JObject(JField("path", localFile.getAbsoluteFile.getParentFile.getAbsolutePath))
       )
     }
+    // if neither of those work, try loading from the classpath, which allows reading text files from jars included
+    // in the classpath
+    else if (getClass.getClassLoader.getResource(configPath) != null) {
+      replaceVariablesInConf(
+        parse(scala.io.Source.fromURL(getClass.getClassLoader.getResource(configPath)).mkString(""))
+          merge JObject(JField("path", "/"))
+      )
+    }
     else {
       throw new IllegalArgumentException(s"Can't find file $configPath.")
     }
   }
 }
-

@@ -5,21 +5,19 @@ import java.net.URL
 import com.bfm.topnotch.SparkApplicationTester
 import com.bfm.topnotch.TnTestHelper
 import java.io.File
-import com.bfm.topnotch.tnengine.{TnRESTWriter, TnHBaseWriter}
-import org.apache.hadoop.hbase.util.Bytes
+
+import com.bfm.topnotch.tnengine.{TnHBaseWriter, TnRESTWriter}
 import org.apache.spark.sql._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.types.{StringType, LongType}
+import org.apache.spark.sql.types.{LongType, StringType}
 import org.scalatest.{Matchers, Tag}
 import org.json4s._
 import org.json4s.native.JsonMethods._
-import spray.json._
 
 /**
  * The tests for [[com.bfm.topnotch.tnassertion.TnAssertionRunner TnAssertionRunner]].
  */
 class TnAssertionRunnerTest extends SparkApplicationTester with Matchers {
-  import TNAssertionReportJsonProtocol._
   import TnTestHelper._
   import TnAssertionRunner._
   implicit val formats = DefaultFormats
@@ -27,7 +25,8 @@ class TnAssertionRunnerTest extends SparkApplicationTester with Matchers {
   lazy val filledDF = spark.read.json(getClass.getResource("sampleWithValuesDF.json").getFile).cache
   lazy val windowDF = spark.read.json(getClass.getResource("sampleWithWindowsDF.json").getFile).cache
   lazy val correctPostMergeDF = filledDF.withColumn(INVALID_COL_NAME, lit(null).cast(StringType))
-  lazy val emptyDFPreMerge = spark.createDataFrame(sc.emptyRDD[Row], filledDF.schema).withColumn(INDEX_COL_NAME, lit(null).cast(LongType)).cache
+  lazy val emptyDFPreMerge = spark.createDataFrame(spark.sparkContext.emptyRDD[Row], filledDF.schema)
+    .withColumn(INDEX_COL_NAME, lit(null).cast(LongType)).cache
   lazy val emptyDFPostMerge = emptyDFPreMerge.withColumn(INVALID_COL_NAME, lit(null).cast(StringType)).cache
 
 
@@ -256,19 +255,8 @@ class TnAssertionRunnerTest extends SparkApplicationTester with Matchers {
   }
 
   /**
-   * The tests for the entire TnAssertionRunner
-   */
-  "TnAssertionRunner" should "load local parquet file with 4 rows, run 1 test, and write results to HBase" taggedAs driverTag in {
-    runWithMocks(attachIdx(filledDF), Seq(only1Assertion))
-  }
-
-  it should "load local parquet file with 4 rows, run 2 tests, and write results to HBase" taggedAs driverTag in {
-    runWithMocks(attachIdx(filledDF), Seq(not3Assertion, only1Assertion))
-  }
-
-  /**
    * Ensure that the required parts of the report generated from running checkAssertion is correct
- *
+   *
    * @param generatedReport The TnAssertionReport created by running checkAssertion
    * @param assertion The assertion used to generate the TnAssertionReport
    * @param intendedPercent The percent of wrong values that the test expects
@@ -308,25 +296,5 @@ class TnAssertionRunnerTest extends SparkApplicationTester with Matchers {
     val merged = assertionRunner.identifyInvalidRows(dfToCheck, assertions)
     val correctMerged = dfToCheck.filter(mergedRowsFilter).withColumn(INVALID_COL_NAME, failureCol)
     dfEquals(merged, correctMerged)
-  }
-
-  /**
-   * Run TnAssertionRunner for a given data set with the following assertions and ensure that the correct values are put in
-   * the writer
- *
-   * @param idxDF The dataframe with the index column applied to run the checks on
-   * @param assertions The assertions to check
-   */
-  def runWithMocks(idxDF: DataFrame, assertions: Seq[TnAssertionParams]): Unit = {
-    import TnHBaseWriter._
-    val testReportName = "test.Report"
-    val correctReports = assertions.map(assertionRunner.checkAssertion(_, idxDF, idxDF.count))
-    setHBaseMock(new HTableParams(
-      TABLE_NAME,
-      Seq(new HPutParams(Bytes.toBytes(testReportName), Bytes.toBytes(COLUMN_FAMILY), Bytes.toBytes(COLUMN_QUALIFIER),
-        Bytes.toBytes(correctReports.toJson.prettyPrint),
-        (actualReports: Array[Byte]) => {correctReports.toJson == new String(actualReports).parseJson}, new String(_))
-      )))
-    assertionRunner.runAssertions(idxDF, testReportName, assertions)
   }
 }

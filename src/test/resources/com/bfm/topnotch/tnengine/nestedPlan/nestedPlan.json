@@ -5,28 +5,16 @@
   },
   "commands": [
     {
-      "command": "view",
-      "externalParamsFile": "testView.json",
-      "inputs": [
-        {
-          "ref": "src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet",
-          "onDisk": true
-        }
-      ],
-      "outputKey": "viewKey",
-      "cache": true
-    },
-    {
       "command": "diff",
-      "externalParamsFile": "testDiff.json",
+      "externalParamsFile": "../testDiff.json",
       "input1": {
-        "ref": "src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet",
-        "onDisk": true
+        "ref":"src/test/resources/com/bfm/topnotch/tndiff/currentLoans.parquet",
+        "onDisk":true
       },
       "input1Name": "cur",
       "input2": {
-        "ref": "src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet",
-        "onDisk": true
+        "ref":"src/test/resources/com/bfm/topnotch/tndiff/oldLoans.parquet",
+        "onDisk":true
       },
       "input2Name": "old",
       "outputKey": "diffKey",
@@ -34,7 +22,7 @@
     },
     {
       "command": "assertion",
-      "externalParamsFile": "testAssertion.json",
+      "externalParamsFile": "../testAssertion.json",
       "input": {
         "ref": "viewKey",
         "onDisk": false

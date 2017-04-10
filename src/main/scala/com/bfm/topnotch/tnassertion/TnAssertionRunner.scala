@@ -1,13 +1,13 @@
 package com.bfm.topnotch.tnassertion
 
-import com.bfm.topnotch.tnassertion.TNAssertionReportJsonProtocol._
 import com.bfm.topnotch.tnengine.TnWriter
 import com.typesafe.scalalogging.StrictLogging
-//import org.apache.spark.sql.catalyst.SqlParser
 import scala.collection.JavaConversions._
 import org.apache.spark.sql.functions._
-import org.apache.spark.sql.{Column, DataFrame, Row}
-import spray.json._
+import org.apache.spark.sql.DataFrame
+import org.json4s._
+import org.json4s.Extraction.decompose
+import org.json4s.native.Serialization
 
 
 /**
@@ -17,6 +17,7 @@ import spray.json._
   */
 class TnAssertionRunner(writer: TnWriter) extends StrictLogging {
   import TnAssertionRunner._
+  implicit val formats = Serialization.formats(NoTypeHints) + new TnAssertionReportSerializer
 
   /**
     * Run a set of assertions on a data set, write a report summarizing the results to a persistent location, and return
@@ -31,8 +32,8 @@ class TnAssertionRunner(writer: TnWriter) extends StrictLogging {
   def runAssertions(input: DataFrame, reportKey: String, assertions: Seq[TnAssertionParams]): AssertionReturn = {
     val totalCount = input.count
     val assertionReports = assertions.map(checkAssertion(_, input, totalCount))
-    writer.writeReport(reportKey, assertionReports.toJson.prettyPrint)
-    logger.info(s"$reportKey has value \n${assertionReports.toJson.prettyPrint}")
+    writer.addSectionToReport(decompose(TnAssertionGroupReport(reportKey, assertionReports)))
+    logger.info(s"$reportKey has value \n${Serialization.writePretty(assertionReports)}")
     AssertionReturn(identifyInvalidRows(input, assertions),
       assertionReports.filter(report => report.fractionInvalid > report.threshold).length)
   }
@@ -45,7 +46,7 @@ class TnAssertionRunner(writer: TnWriter) extends StrictLogging {
     * @param totalCount The number of rows in df, precomputed as this function will be called many times
     * @return The report summarizing the results of running the assertion.
     */
-  protected[tnassertion] def checkAssertion(assertion: TnAssertionParams, df: DataFrame, totalCount: Long): TnAssertionReport = {
+  protected[topnotch] def checkAssertion(assertion: TnAssertionParams, df: DataFrame, totalCount: Long): TnAssertionReport = {
     val withUserDefinedFeaturesDF = assertion.userDefinedFeatures match {
       case None => df
       case Some(features) => df.selectExpr(("*") +: features.map(nameExprPairToSelectExpr).toSeq: _*)

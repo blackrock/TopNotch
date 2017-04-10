@@ -45,8 +45,8 @@ class TnDiffCreator {
         else columns.columnThreshold
       // diff the columns specified by the user
       val diffCols =
-        prependColNamesWithTable(columns.input1Columns.diffColumns, input1Name, allowNested = false)
-          .zip(prependColNamesWithTable(columns.input2Columns.diffColumns, input2Name, allowNested = false))
+        prependColNamesWithTable(columns.input1Columns.diffColumns, input1Name)
+          .zip(prependColNamesWithTable(columns.input2Columns.diffColumns, input2Name))
           .zip(thresholds)
           .map { case ((col1, col2), e: Double) => Seq(col1, col2) ++
           diffTwoColumns(col1, joinedDF.select(col1).schema.head,
@@ -102,15 +102,11 @@ class TnDiffCreator {
    * @param inputName The name of the input to use as the table name that will be prepend to the column names
    * @param rename If true, make this column that renames from the unprepended name to the new one. If not, then just make it
    *               a reference to the column with the prepended name
-   * @param allowNested If true, don't wrap the column names in backticks so that periods mean nested tables. If false,
-   *                    wrap column names in backticks so that periods mean non-nested columns with periods in names.
-   *                    Want to disable nesting as comparison process will unnest compared columns but keep periods in name
-   *                    so need to be able to refer to the unnested columns that keep periods in name.
    */
-  private def prependColNamesWithTable(colNames: Seq[String], inputName: String, rename: Boolean = false, allowNested: Boolean = true) = {
+  private def prependColNamesWithTable(colNames: Seq[String], inputName: String, rename: Boolean = false) = {
     colNames.map(colName => {
-      val newNameWithoutBackticks = inputName + colJoin + colName
-      val newName = if (allowNested) newNameWithoutBackticks else s"`${newNameWithoutBackticks}`"
+      // replacing . with _ in column names as having . in unnested columns can create problems
+      val newName = inputName + colJoin + colName.replace('.', '_')
       if (rename) col(colName).as(newName) else col(newName)
     })
   }
@@ -169,8 +165,8 @@ class TnDiffCreator {
   private def removeEqualRowsFromDiff(view1Name: String, view2Name: String, columns: TnDiffParams, thresholds: Seq[Double], diffedDF: DataFrame): DataFrame = {
     // keep only the rows where at least one column is different
     diffedDF.where(
-      prependColNamesWithTable(columns.input1Columns.diffColumns, view1Name, allowNested = false)
-        .zip(prependColNamesWithTable(columns.input2Columns.diffColumns, view2Name, allowNested = false))
+      prependColNamesWithTable(columns.input1Columns.diffColumns, view1Name)
+        .zip(prependColNamesWithTable(columns.input2Columns.diffColumns, view2Name))
         .zip(thresholds)
         .map {
         case ((col1, col2), e) => {

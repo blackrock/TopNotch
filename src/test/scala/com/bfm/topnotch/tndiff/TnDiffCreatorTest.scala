@@ -448,8 +448,8 @@ class TnDiffCreatorTest extends SparkApplicationTester with Matchers {
       TnDiffParams(TnDiffInput(Seq("id"), Seq("struct1.int")), TnDiffInput(Seq("id"), Seq("struct1.int"))), filterEqualRows = true)
     dfEquals(diffDf, twoPointOtherDf.where(lit(false)).select(
       col("id").as(s"t1${colJoin}id"), col("id").as(s"t2${colJoin}id"),
-      col("struct1.int").as(s"t1${colJoin}struct1.int"), col("struct1.int").as(s"t2${colJoin}struct1.int"),
-      lit(0).as(minusColName(s"t1${colJoin}struct1.int", s"t2${colJoin}struct1.int")),
-      lit(equalStr).as(equalityColName(s"t1${colJoin}struct1.int", s"t2${colJoin}struct1.int"))))
+      col("struct1.int").as(s"t1${colJoin}struct1_int"), col("struct1.int").as(s"t2${colJoin}struct1_int"),
+      lit(0).as(minusColName(s"t1${colJoin}struct1_int", s"t2${colJoin}struct1_int")),
+      lit(equalStr).as(equalityColName(s"t1${colJoin}struct1_int", s"t2${colJoin}struct1_int"))))
   }
 }

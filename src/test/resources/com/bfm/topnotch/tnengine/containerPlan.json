@@ -1,4 +1,8 @@
 {
+  "io": {
+    "writer": "hdfs",
+    "dest": "target/test-classes/com/bfm/topnotch/tnengine/testOutput/"
+  },
   "commands": [
     {
       "command": "view",
@@ -11,6 +15,10 @@
       ],
       "outputKey": "viewKey",
       "cache": true
+    },
+    {
+      "command": "plan",
+      "externalParamsFile": "nestedPlan/nestedPlan.json",
     }
   ]
 }

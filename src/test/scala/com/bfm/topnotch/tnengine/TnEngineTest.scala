@@ -3,12 +3,17 @@ package com.bfm.topnotch.tnengine
 import java.io.File
 
 import com.bfm.topnotch.{SparkApplicationTester, tnengine}
-import com.bfm.topnotch.tnassertion.{AssertionSeq, TnAssertionCmd, TnAssertionParams, TnAssertionRunner}
+import com.bfm.topnotch.tnassertion._
 import com.bfm.topnotch.tndiff.{TnDiffCmd, TnDiffCreator, TnDiffInput, TnDiffParams}
-import com.bfm.topnotch.tnengine.TnEngine.{TnCLIConfig, NO_FAILURES, ASSERTIONS_FAILED_EXIT_CODE}
+import com.bfm.topnotch.tnengine.TnEngine.{ASSERTIONS_FAILED_EXIT_CODE, NO_FAILURES, TnCLIConfig}
 import com.bfm.topnotch.tnview.{TnViewCmd, TnViewCreator, TnViewParams}
 import org.apache.commons.io.FileUtils
 import org.apache.commons.io.filefilter.{FalseFileFilter, TrueFileFilter}
+import org.apache.hadoop.hbase.util.Bytes
+import org.json4s._
+import org.json4s.native.Serialization
+import org.json4s.Extraction.decompose
+import org.json4s.native.JsonMethods._
 import org.scalatest.{Matchers, Tag}
 
 /**
@@ -19,9 +24,13 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   lazy val fileReader = new TnFileReader
   lazy val engine = new TnEngine(spark)
   lazy val diffCreator = new TnDiffCreator()
-  lazy val assertionRunner = new TnAssertionRunner(new TnHBaseWriter(Some(hconn)))
+  lazy val testWriter = new TnHBaseWriter(Some(hconn))
+  lazy val assertionRunner = new TnAssertionRunner(testWriter)
   lazy val viewCreator = new TnViewCreator(spark)
   val outputDir = new File(getClass.getResource("testOutput").getFile)
+  val testReportKey = "testReportKey"
+  implicit val formats = Serialization.formats(NoTypeHints) + new TnAssertionReportSerializer
+
 
   /**
    * The tags
@@ -33,7 +42,6 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
   object parseConfigTag extends Tag("parseConfig")
   object getInputDFTag extends Tag("getInputDF")
   object cacheTag extends Tag("cacheOutput")
-  object splitArgsTag extends Tag("splitArgs")
   object runTag extends Tag("run")
 
 
@@ -72,6 +80,32 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
       "assertionKey",
       None,
       Some("target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertionOutput.parquet")
+    )
+  )
+
+  val twoAssertionsPlan = Seq[TnCmd](
+    TnAssertionCmd(
+      AssertionSeq(
+        Seq(
+          TnAssertionParams("loanBal > 0", "Loan balances are positive", 0.01),
+          TnAssertionParams("loanBal > 1", "Loan balances are greater than 1", 0.02)
+        )
+      ),
+      Input("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true),
+      "assertionKey",
+      None,
+      Some("target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertion1Output.parquet")
+    ),
+    TnAssertionCmd(
+      AssertionSeq(
+        Seq(
+          TnAssertionParams("loanBal < -1", "Loan balances are less than -1", 0.02)
+        )
+      ),
+      Input("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true),
+      "assertionKey2",
+      None,
+      Some("target/test-classes/com/bfm/topnotch/tnengine/testOutput/assertion2Output.parquet")
     )
   )
 
@@ -140,6 +174,10 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
     shouldContainNErrors(engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/varAsFilePlan.json"), fileReader), 1, 1)
   }
 
+  it should "return an error when referencing a nested plan that doesn't exist" taggedAs(tnEngineTag, parseConfigTag) in {
+    shouldContainNErrors(engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/invalidContainerPlan.json"), fileReader), 1)
+  }
+
   it should "parse a correct, one command plan correctly" taggedAs(tnEngineTag, parseConfigTag) in {
     engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/oneCorrectPlan.json"), fileReader) shouldBe oneCorrectPlan
   }
@@ -149,32 +187,72 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
     engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/allCmdsPlan.json"), fileReader) shouldBe allCmdsPlan
   }
 
+  it should "correctly parse and unnest a plan that contains a view and a nested plan with a diff and an assertion " +
+    "that references that view" taggedAs(tnEngineTag, parseConfigTag) in {
+    engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/containerPlan.json"), fileReader) shouldBe allCmdsPlan
+  }
+
   "getInputDF" should "handle csv input data" taggedAs(tnEngineTag, getInputDFTag) in {
     val df = engine.getInputDF(Input("src/test/resources/com/bfm/topnotch/tnengine/rawTest.csv", true, Some(",")))
     df.count() shouldBe 4
   }
 
   "executeCommands" should "do nothing when given an empty seq of commands" taggedAs(tnEngineTag, executeCommandsTags) in {
-    engine.executeCommands(Seq(), assertionRunner, diffCreator, viewCreator)
+    //we aren't testing what the assertionRunner puts in hbase, so accept anything
+    //need to set hbase as assertionRunner has been configured to write to hbase
+    allowAnyHBaseActions(TnHBaseWriter.TABLE_NAME)
+    engine.executeCommands(Seq(), testReportKey, testWriter, assertionRunner, diffCreator, viewCreator)
   }
 
   it should "cache two command outputs when the first is used by a view to generate the second" taggedAs(tnEngineTag, executeCommandsTags, cacheTag) in {
+    allowAnyHBaseActions(TnHBaseWriter.TABLE_NAME)
     engine.executeCommands(
       engine.parseCommands(fileReader.readConfiguration("src/test/resources/com/bfm/topnotch/tnengine/multicachePlan.json"), fileReader),
-      assertionRunner, diffCreator, viewCreator)
+      testReportKey, testWriter, assertionRunner, diffCreator, viewCreator)
     spark.sparkContext.getPersistentRDDs.size shouldBe 2
   }
 
   it should "run and write the correct parquet files when given a seq of commands that uses keys, " +
     "load from keys and files, and write to disk" taggedAs(tnEngineTag, executeCommandsTags) in {
-    //we aren't testing what the assertionRunner puts in hbase, so accept anything
-    //need to set hbase as assertionRunner has been configured to write to hbase
-    setHBaseMock(new HTableParams(TnHBaseWriter.TABLE_NAME, Seq(null)), true)
+    allowAnyHBaseActions(TnHBaseWriter.TABLE_NAME)
     //the files we expect to be created in testOutput
     val dirsToBeCreated = Seq("testOutput", "diffOutput.parquet", "assertionOutput.parquet")
     //remove everything already there to make sure we are testing for the creation of new files
     FileUtils.cleanDirectory(outputDir)
-    engine.executeCommands(allCmdsPlan, assertionRunner, diffCreator, viewCreator)
+    engine.executeCommands(allCmdsPlan, testReportKey, testWriter, assertionRunner, diffCreator, viewCreator)
+    val jFiles = FileUtils.listFilesAndDirs(outputDir, FalseFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+    val files = jFiles.toArray(new Array[File](jFiles.size()))
+    files.map(_.getName) should contain theSameElementsAs dirsToBeCreated
+  }
+
+  /**
+    * The tests for the entire TnAssertionRunner
+    */
+  it should "write a correct report to HBase when loading a parquet file with 4 rows, runing an assertion group with 2 " +
+    "assertions and then an assertion group with 1 assertion" taggedAs(tnEngineTag, executeCommandsTags) in {
+
+    import TnHBaseWriter._
+
+    // generating the correct group reports, so run every assertion in every assertion command
+    // and then combine the resulting reports into group reports
+    val df = engine.getInputDF(Input("src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet", true))
+    val correctReports = Seq(twoAssertionsPlan(0), twoAssertionsPlan(1)).map(cmd =>
+      cmd.asInstanceOf[TnAssertionCmd].params.assertions.map(assertionRunner.checkAssertion(_, df, df.count)))
+    val correctGroupReports = Seq(TnAssertionGroupReport(twoAssertionsPlan(0).outputKey, correctReports(0)),
+      TnAssertionGroupReport(twoAssertionsPlan(1).outputKey, correctReports(1)))
+
+    setHBaseMock(new HTableParams(
+      TABLE_NAME,
+      Seq(new HPutParams(Bytes.toBytes(testReportKey), Bytes.toBytes(COLUMN_FAMILY), Bytes.toBytes(COLUMN_QUALIFIER),
+        Serialization.writePretty(correctGroupReports),
+        (actualReports: Array[Byte]) => {
+          parse(new String(actualReports)) shouldBe decompose(twoAssertionsPlan +: correctGroupReports)
+        })
+      )))
+    val dirsToBeCreated = Seq("testOutput", "assertion1Output.parquet", "assertion2Output.parquet")
+    //remove everything already there to make sure we are testing for the creation of new files
+    FileUtils.cleanDirectory(outputDir)
+    engine.executeCommands(twoAssertionsPlan, testReportKey, testWriter, assertionRunner, diffCreator, viewCreator)
     val jFiles = FileUtils.listFilesAndDirs(outputDir, FalseFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
     val files = jFiles.toArray(new Array[File](jFiles.size()))
     files.map(_.getName) should contain theSameElementsAs dirsToBeCreated
@@ -186,7 +264,16 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
     engine.run(TnCLIConfig("src/test/resources/com/bfm/topnotch/tnengine/completePlan.json"))
     val jFiles = FileUtils.listFilesAndDirs(outputDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
     val files = jFiles.toArray(new Array[File](jFiles.size()))
-    files.map(_.getName) should contain allOf ("testOutput", "assertionKey", "diffOutput.parquet", "assertionOutput.parquet")
+    files.map(_.getName) should contain allOf ("testOutput", "completePlan.json", "diffOutput.parquet", "assertionOutput.parquet")
+  }
+
+  it should "execute correctly when given completePlan.json, no variables, and a custom key for the report" taggedAs (tnEngineTag, runTag) in {
+    //remove everything already there to make sure we are testing for the creation of new files
+    FileUtils.cleanDirectory(outputDir)
+    engine.run(TnCLIConfig("src/test/resources/com/bfm/topnotch/tnengine/completePlan.json", reportKey = Some("exKey")))
+    val jFiles = FileUtils.listFilesAndDirs(outputDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
+    val files = jFiles.toArray(new Array[File](jFiles.size()))
+    files.map(_.getName) should contain allOf ("testOutput", "exKey", "diffOutput.parquet", "assertionOutput.parquet")
   }
 
   it should "execute correctly when given cliReplacementPlan.json and a variable" taggedAs (tnEngineTag, runTag) in {
@@ -196,8 +283,30 @@ class TnEngineTest extends SparkApplicationTester with Matchers {
       variableDictionary = Map("fileNameToReplace" -> "src/test/resources/com/bfm/topnotch/tnview/currentLoans.parquet")))
     val jFiles = FileUtils.listFilesAndDirs(outputDir, TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE)
     val files = jFiles.toArray(new Array[File](jFiles.size()))
-    val x = files.map(_.getName)
-    files.map(_.getName) should contain allOf ("testOutput", "assertionKey", "assertionOutput.parquet")
+    files.map(_.getName) should contain allOf ("testOutput", "cliReplacementPlan.json", "assertionOutput.parquet")
+  }
+
+  it should "execute without crashing when reading a command from a jar" taggedAs (tnEngineTag, runTag) in {
+    // note that the plan, which is stored on the file system, references a command that is in the jar
+    engine.run(TnCLIConfig("src/test/resources/com/bfm/topnotch/tnengine/readFromClasspathPlan.json"))
+  }
+
+  it should "throw an exception during execution when given a potentially invalid plan if " +
+    "haltIfPotentialErrors is false" taggedAs (tnEngineTag, runTag) in {
+    val e = intercept[Exception]{
+      engine.run(TnCLIConfig("src/test/resources/com/bfm/topnotch/tnengine/invalidContainerPlan.json", haltIfPotentialErrors = false))
+    }
+    // executeCommands will be in the stack trace if an exception is thrown during execution
+    TnErrorCmd.getExceptionStackTrace(e) should include ("com.bfm.topnotch.tnengine.TnEngine.executeCommands")
+  }
+
+  it should "throw an exception before beginning execution when given a potentially invalid plan if " +
+    "haltIfPotentialErrors is true" taggedAs (tnEngineTag, runTag) in {
+    val e = intercept[IllegalArgumentException]{
+      engine.run(TnCLIConfig("src/test/resources/com/bfm/topnotch/tnengine/invalidContainerPlan.json", haltIfPotentialErrors = true))
+    }
+    // executeCommands will not be in the stack trace if an exception is thrown before execution
+    TnErrorCmd.getExceptionStackTrace(e) should not include ("com.bfm.topnotch.tnengine.TnEngine.executeCommands")
   }
 
   it should "return 0 failures if all assertions pass" taggedAs(executeCommandsTags) in {

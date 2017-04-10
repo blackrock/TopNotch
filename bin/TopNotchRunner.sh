@@ -5,7 +5,7 @@
 # export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-LOCATION_HADOOP_HOME}
 
 scriptDirectory=`dirname "${BASH_SOURCE-$0}"`
-: ${TOPNOTCH_JAR:="$scriptDirectory"/TopNotch-assembly-0.2.jar}
+: ${TOPNOTCH_JAR:="$scriptDirectory"/TopNotch-assembly-0.2.1.jar}
 : ${MASTER:=local}
 : ${MAIN:=com.bfm.topnotch.tnengine.TnEngine}
 

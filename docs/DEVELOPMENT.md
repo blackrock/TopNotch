@@ -10,6 +10,6 @@ Follow the below steps to being TopNotch Development
 
 1. Clone this repo.
 1. Import the project into Intellij.
-1. Run ``mvn test`` to run the unit tests and ``mvn package`` to produce the __target/TopNotch-assembly-0.2.jar__ file for users.
+1. Run ``mvn test`` to run the unit tests and ``mvn package`` to produce the __target/TopNotch-assembly-0.2.1.jar__ file for users.
 1. See CLUSTER_INSTALL.md for how to setup TopNotch to run on your cluster.
-1. See USER_GUIDE.md for an example plan and commands that can be used with your TopNotch-assembly-0.2.jar and runner scripts.
+1. See USER_GUIDE.md for an example plan and commands that can be used with your TopNotch-assembly-0.2.1.jar and runner scripts.

@@ -1,5 +1,6 @@
 package com.bfm.topnotch
 
+import org.scalatest.OneInstancePerTest
 import org.apache.hadoop.hbase.CellUtil
 import org.apache.hadoop.hbase.client.{HConnection, HTableInterface, Put}
 import org.apache.spark._
@@ -11,7 +12,8 @@ import com.typesafe.scalalogging.StrictLogging
 /**
  * This class handles some of the boilerplate of testing SparkApplications with HBase writers
  */
-abstract class SparkApplicationTester extends FlatSpec with MockFactory with StrictLogging with SharedSparkContext {
+abstract class SparkApplicationTester extends FlatSpec with OneInstancePerTest with MockFactory with StrictLogging
+  with SharedSparkContext {
   protected val hconn = mock[HConnection]
   lazy val spark = SparkSession
     .builder()
@@ -23,7 +25,7 @@ abstract class SparkApplicationTester extends FlatSpec with MockFactory with Str
     .getOrCreate()
 
   /**
-   * Verify that one the next HTable will receive the correct puts. Call this once per HTable that is supposed to be created and written to.
+   * Verify that the next HTable will receive the correct puts. Call this once per HTable that is supposed to be created and written to.
    * Note: All HBase tests for a SparkApplication object must be run sequentially in order for us to keep track of HTableInterface mocks
    * @param tests The test's expected name for the HTable and expected values for the Put objects placed in the HTable
    * @param acceptAnyPut Tells the mock to accept any put value. This is useful for tests using the mock and but not
@@ -42,20 +44,25 @@ abstract class SparkApplicationTester extends FlatSpec with MockFactory with Str
             (table.put(_: Put)).expects(where {
               (actualPut: Put) =>
                 val actualValue = CellUtil.cloneValue(actualPut.get(correctPut.columnFamily, correctPut.columnQualifier).get(0))
-                val eqResult = java.util.Arrays.equals(actualPut.getRow, correctPut.row) && correctPut.valueTest(actualValue)
-                if (!eqResult) {
-                  logger.error("A put is incorrect.")
-                  logger.error("Actual value: " + correctPut.valueToString(
-                    CellUtil.cloneValue(actualPut.get(correctPut.columnFamily, correctPut.columnQualifier).get(0))))
-                  logger.error("Correct value: " + correctPut.valueToString(correctPut.value))
-                }
-                eqResult
+                correctPut.valueTest(actualValue)
+                // just return true, as if issues, will have exception thrown by value test
+                true
             })
           }
         }
       }
       (table.close _).expects().returns()
     }
+  }
+
+  /**
+    * Set the next HTable will accept anything accept anything. This is useful if testing a thing that needs an hbase
+    * table, but the specific test isn't testing the hbase functionality.
+    *
+    * @param tableName the name of the table that will be accessed.
+    */
+  def allowAnyHBaseActions(tableName: String): Unit ={
+    setHBaseMock(new HTableParams(tableName, Seq(null)), true)
   }
 
   /**
@@ -73,18 +80,16 @@ abstract class SparkApplicationTester extends FlatSpec with MockFactory with Str
    * @param row The name of the row to put into HBase
    * @param columnFamily The cell's column family
    * @param columnQualifier The cell's column qualifier
-   * @param value The value to put in the cell
+   * @param correctString A string representing the correct value or an error message
    * @param valueTest The method for checking if the value in the cell is correct. Done as the actual and intended values
-   *                  in a cell may be equal even if they don't have the expression as an array of bytes
-   * @param valueToString A function for converting a value to a string so that incorrect values can be written to
-   *                      log.
+   *                  in a cell may be equal even if they don't have the expression as an array of bytes.
+    *                 This should throw an exception on failure, using a call like shouldBe
    */
   case class HPutParams(
                          row: Array[Byte],
                          columnFamily: Array[Byte],
                          columnQualifier: Array[Byte],
-                         value: Array[Byte],
-                         valueTest: Array[Byte] => Boolean,
-                         valueToString: Array[Byte] => String
+                         correctString: String,
+                         valueTest: Array[Byte] => Unit
                          )
 }

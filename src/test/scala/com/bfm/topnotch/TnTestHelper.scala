@@ -3,8 +3,9 @@ package com.bfm.topnotch
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.sql.functions._
 import org.scalatest.Matchers
-import spray.json._
 import scala.io.Source
+import org.json4s._
+import org.json4s.native.JsonMethods._
 
 /**
  * This class handles some of the TopNotch reusable test code
@@ -16,8 +17,8 @@ object TnTestHelper extends Matchers {
    * @param fileName The path to the file relative to the path resources/src/test/scala/com/bfm/topnotch
    * @return The contents of the file as one string
    */
-  def readResourceFileToJson[T](fileName: String, classType: Class[_]): JsValue = {
-    Source.fromFile(classType.getResource(fileName).getFile).getLines().mkString("\n").parseJson
+  def readResourceFileToJson[T](fileName: String, classType: Class[_]): JValue = {
+    parse(Source.fromFile(classType.getResource(fileName).getFile).getLines().mkString("\n"))
   }
 
   /**

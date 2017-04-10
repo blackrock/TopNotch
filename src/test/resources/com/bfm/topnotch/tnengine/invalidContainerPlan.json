@@ -1,0 +1,8 @@
+{
+  "commands": [
+    {
+      "command": "plan",
+      "externalParamsFile": "doesntExistPlan.json",
+    }
+  ]
+}

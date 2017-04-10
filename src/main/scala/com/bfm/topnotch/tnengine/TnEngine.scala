@@ -1,5 +1,6 @@
 package com.bfm.topnotch.tnengine
 
+import java.io.{File, PrintWriter, StringWriter}
 import java.net.URL
 
 import com.bfm.topnotch.tnassertion.{TnAssertionCmd, TnAssertionRunner}
@@ -10,13 +11,15 @@ import com.bfm.topnotch.tnview.{TnViewCmd, TnViewCreator}
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.spark.sql.{DataFrame, SaveMode, SparkSession}
 import org.json4s._
+import org.json4s.native.JsonMethods._
+import org.json4s.Extraction.decompose
 import org.json4s.native.Serialization
 import org.json4s.native.Serialization.writePretty
 import org.apache.log4j.{Level, Logger}
 import com.typesafe.scalalogging.StrictLogging
+import org.apache.commons.io.FilenameUtils
 
 import scala.collection.mutable.{Map => MMap, Set => MSet}
-import scala.compat.Platform.EOL
 
 /**
   * The entry for Spark into TopNotch.
@@ -48,22 +51,34 @@ object TnEngine extends StrictLogging {
     }
   }
 
-  case class TnCLIConfig(planPath: String = "", planServerURL: Option[String] = None,
-                         variableDictionary: Map[String, String] = Map.empty)
+  case class TnCLIConfig(planPath: String = "", planServerURL: Option[String] = None, reportKey: Option[String] = None,
+                         haltIfPotentialErrors: Boolean = false, variableDictionary: Map[String, String] = Map.empty)
 
   val parser = new scopt.OptionParser[TnCLIConfig]("scopt") {
     head("scopt", "3.x")
 
-    note("If the plan and commands are stored on disk, set planPath to path to the plan.\n" +
-      "If the plan and commands are stored on a REST server, set planServer to the base URL to that server and " +
-      "planPath to the route on that server for accessing the plan.")
+    note("If the plan and commands are standalone files on disk, set planPath to the path on disk.\n"+
+      "If the plan and commands are packaged in one or more jars, add the jars containing the plans and commands to " +
+      "the Spark submit --jars flag. (Note: TopNotchRunner.sh does not support the --jars flag) Then, set --planPath " +
+      "to the classpath to the jar.\n" +
+      "If the plan and commands are accessible by a REST API, set planServer to the base URL for the API and planPath " +
+      "to the route in the API for accessing the plan.")
 
     opt[String]('l', "planPath").required().valueName("<path>").action( (x, c) =>
       c.copy(planPath = x) ).text("planPath is the path to the plan on disk or relative to planServerURL")
 
     opt[String]('s', "planServerURL").valueName("<URL>").action( (x, c) =>
-      c.copy(planServerURL = Some(x)) ).text("planServerURL is the base URL of the REST server for loading a plan." +
+      c.copy(planServerURL = Some(x)) ).text("planServerURL is the base URL of the REST server for loading a plan. " +
       "Note that this URL should not include the route relative to the URL for loading the plan")
+
+    opt[String]('k', "reportKey").valueName("<key>").action( (x, c) =>
+      c.copy(planPath = x) ).text("the key for referring to the report. " +
+      "The filename from planPath will be used if this is not set")
+
+    opt[Unit]('c', "haltIfPotentialErrors").action( (_, c) =>
+      c.copy(haltIfPotentialErrors = true) ).text("If set, TopNotch will halt after parsing and before before executing any commands " +
+      "if there are potential errors in the configurations. By default, TopNotch will parse the configs, print a warning," +
+      "and proceed with execution in the event of potential errors as certain valid configurations may appear to be invalid.")
 
     opt[Map[String,String]]('d', "variableDictionary").valueName("variable1=value1,variable2=value2...").action( (x, c) =>
       c.copy(variableDictionary = x) ).text("variables and values for string replacement in the plan and commands")
@@ -112,26 +127,25 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
 
     val errorsStr = collectErrors(cmds)
     if (errorsStr.isDefined) {
-      throw new IllegalArgumentException(errorsStr.get)
+      val errorString = "Possible error parsing plans and commands.\n" + errorsStr.get
+      if (args.haltIfPotentialErrors) {
+        throw new IllegalArgumentException(errorString)
+      }
+      else {
+        logger.error(errorString + "\nContinuing with execution despite possible issue with plans and commands. " +
+          s"Running commands: \n${writePretty(cmds)}")
+      }
+    }
+    else {
+      logger.info(s"parsing successful, running commands: \n${writePretty(cmds)}")
     }
 
-    logger.info(s"parsing successful, running commands: \n${writePretty(cmds)}")
 
-    executeCommands(cmds,
+    executeCommands(cmds, args.reportKey.getOrElse(FilenameUtils.getName(args.planPath)), writer,
       new TnAssertionRunner(writer),
       new TnDiffCreator(),
       new TnViewCreator(spark))
   }
-
-  case class PlanArgsAndVariableDictionary(planArgs: Seq[String], variableDictionary: Seq[String])
-
-  protected[tnengine] def splitArgs(args: Seq[String]): PlanArgsAndVariableDictionary = {
-    //split the arguments based on first |
-    val dictStart = if(args.contains("|")) args.indexOf('|') else args.length
-    val (planArgs, variableDictionary) = args.splitAt(dictStart)
-    PlanArgsAndVariableDictionary(planArgs, if(variableDictionary.isEmpty) variableDictionary else variableDictionary.tail)
-  }
-
 
   /**
     * Collect all the TnErrorCmds in a TnCmd sequence into one error string
@@ -177,15 +191,18 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
   }
 
   /**
-    * Execute a sequence of commands
+    * Execute a sequence of commands and write the output
     *
     * @param cmds            The commands to execute
+    * @param reportKey       The key used to reference the report when writing the results
+    * @param writer          The writer for writing the reports to a storage location
     * @param assertionRunner The instance of TnAssertionRunner to use to run the assertion commands
     * @param diffCreator     The instance of TnDiffCreator to use to run the diff commands
     * @param viewCreator     The instance of TnViewCreator to use to run the view commands
     * @return The number of assertion commands that failed
     */
-  protected[tnengine] def executeCommands(cmds: Seq[TnCmd], assertionRunner: TnAssertionRunner,
+  protected[tnengine] def executeCommands(cmds: Seq[TnCmd], reportKey: String, writer: TnWriter,
+                                          assertionRunner: TnAssertionRunner,
                                           diffCreator: TnDiffCreator, viewCreator: TnViewCreator): Int = {
 
     /**
@@ -240,7 +257,10 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
       }
     }
 
-    cmds.foldLeft(0)((last: Int, cmd: TnCmd) => last + runCommand(cmd))
+    writer.addSectionToReport(decompose(cmds))
+    val numFailures = cmds.foldLeft(0)((last: Int, cmd: TnCmd) => last + runCommand(cmd))
+    writer.writeReport(reportKey)
+    numFailures
   }
 
 
@@ -266,13 +286,15 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
     * Parse the given AST file for commands and report all valid or invalid commands
     *
     * @param rootAST The root of the AST of the plan file
+    * @param reader The instance of TnReader for reading plans and commands
+    * @param definedOutputKeys The set of defined output keys used so far. Empty by default. Set this for recursive calls
+    *                          to allow a nested plan access to its parent's set of defined output keys.
     * @return The list of commands, either valid commands to run or errors of incorrectly specified commands
     */
-  protected[tnengine] def parseCommands(rootAST: JValue, reader: TnReader): Seq[TnCmd] = {
+  protected[tnengine] def parseCommands(rootAST: JValue, reader: TnReader,
+                                        definedOutputKeys: MSet[String] = MSet.empty): Seq[TnCmd] = {
     import TnCmdStrings._
 
-    // a running list of the output keys used so far
-    val definedOutputKeys: MSet[String] = MSet.empty
     val fs = FileSystem.get(spark.sparkContext.hadoopConfiguration)
     /**
       * Determine if all inputs to each command are valid: either having been previously defined in this run or can be
@@ -281,21 +303,25 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
       *
       * @param inputs The input refs to check
       * @param cmd    The command which uses the input refs
+      *
+      * @return cmd if command is valid,
       */
-    def inputValidityCheck(inputs: Seq[Input], cmd: TnCmd): Unit = {
+    def inputValidityCheck(inputs: Seq[Input], cmd: TnCmd, cmdStr: JValue, commandIndex: Int): TnCmd = {
       val invalidList = inputs.map(v => ((definedOutputKeys.contains(v.ref) && !v.onDisk) || (fs.exists(new Path(v.ref)) && v.onDisk), v.ref))
         .filter(_._1 == false)
-      if (invalidList.isEmpty) {
-        // add the output key reference as that is now valid
-        definedOutputKeys.add(cmd.outputKey)
+      // add the output key reference as valid
+      definedOutputKeys.add(cmd.outputKey)
+      if (!invalidList.isEmpty) {
+        TnErrorCmd(writePretty(cmdStr),
+          s"The following input refs are invalid: ${invalidList.map(_._2).reduce(_ + ", " + _)}", commandIndex)
       }
       else {
-        throw new IllegalArgumentException(s"The following input refs are invalid: ${invalidList.map(_._2).reduce(_ + ", " + _)}")
+        cmd
       }
     }
 
     logger.info("Starting loop")
-    (rootAST \ commandListStr).children.zipWithIndex.map { case (cmdAST, i) => {
+    (rootAST \ commandListStr).children.zipWithIndex.flatMap { case (cmdAST, i) => {
       logger.info(s"Stepping $i")
       try {
         val mergedWithExternalParams = cmdAST merge JObject(JField(paramsStr,
@@ -304,26 +330,28 @@ class TnEngine(spark: SparkSession) extends StrictLogging {
         (cmdAST \ commandStr).extract[String] match {
           case "assertion" => {
             val cmd = mergedWithExternalParams.extract[TnAssertionCmd]
-            inputValidityCheck(Seq(cmd.input), cmd)
-            cmd
+            Seq(inputValidityCheck(Seq(cmd.input), cmd, mergedWithExternalParams, i))
           }
           case "diff" => {
             val cmd = mergedWithExternalParams.extract[TnDiffCmd]
-            inputValidityCheck(Seq(cmd.input1, cmd.input2), cmd)
-            cmd
+            Seq(inputValidityCheck(Seq(cmd.input1, cmd.input2), cmd, mergedWithExternalParams, i))
           }
           case "view" => {
             val cmd = mergedWithExternalParams.extract[TnViewCmd]
-            inputValidityCheck(cmd.inputs, cmd)
-            cmd
+            Seq(inputValidityCheck(cmd.inputs, cmd, mergedWithExternalParams, i))
           }
-          case invalidValue => throw new IllegalArgumentException(s"The value for $commandStr, ${invalidValue}, is invalid. " +
-            s"It must be diff, assertion, or view.")
+          case "plan" => {
+            parseCommands(mergedWithExternalParams \ paramsStr, reader, definedOutputKeys)
+          }
+          case invalidValue => Seq(TnErrorCmd(writePretty(cmdAST), s"The value ${invalidValue}, " +
+            s"which is given with key $commandStr to specify the command type, is invalid. " +
+            s"It must be diff, assertion, or view.", i))
         }
       }
       catch {
-        case e: Throwable =>
-          TnErrorCmd(writePretty(cmdAST), e.getMessage + "\n" + e.getStackTrace().mkString("", EOL, EOL), i)
+        case e: Exception => {
+          Seq(TnErrorCmd(pretty(render(cmdAST)), TnErrorCmd.getExceptionStackTrace(e), i))
+        }
       }
     }
     }

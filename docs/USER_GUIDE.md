@@ -16,8 +16,27 @@ The following list describes each component in-depth and demonstrates how to wri
     * 4 - The command line arguments were specified incorrectly.
 1. Please note that plans and command json files can be parameterized with variables passed in through the command line. See the Variables section of this page for more information.
 
+### TopNotch Command Line Interface Features
+TopNotch can read plans and commands from standalone files on disk, from files that are packaged inside of a jar on disk,
+ or from a REST API. The below documentation, which is the result of running the TopNotch jar with the
+ --help flag, shows how to use these and other options.
+
+```
+If the plan and commands are standalone files on disk, set planPath to the path on disk. 
+If the plan and commands are packaged in one or more jars, add the jars containing the plans and commands to the Spark submit --jars flag. (Note: TopNotchRunner.sh does not support the --jars flag) Then, set --planPath to the classpath to the jar.
+If the plan and commands are accessible by a REST API, set planServer to the base URL for the API and planPath to the route in the API for accessing the plan.
+  -l, --planPath <path>    planPath is the path to the plan on disk or relative to planServerURL
+  -s, --planServerURL <URL>
+                           planServerURL is the base URL of the REST server for loading a plan. Note that this URL should not include the route relative to the URL for loading the plan
+  -k, --reportKey <key>    the key for referring to the report. The filename from planPath will be used if this is not set
+  -c, --haltIfPotentialErrors
+                           If set, TopNotch will halt after parsing and before before executing any commands if there are potential errors in the configurations. By default, TopNotch will parse the configs, print a warning,and proceed with execution in the event of potential errors as certain valid configurations may appear to be invalid.
+  -d, --variableDictionary variable1=value1,variable2=value2...
+                           variables and values for string replacement in the plan and commands
+```
+
 ## Plan
-The _Plan_: This specifies an ordered sequence of commands. Subsequent commands in the _plan_ can depend on the outputs of previous ones. The user can have zero, one, or any greater number of operations of each type of views, diffs, and assertions. There must be at least one operation.
+The _Plan_: This specifies an ordered sequence of commands and nested plans. Subsequent commands in the _plan_ can depend on the outputs of previous ones. A plan can have any number of views, diffs, assertions, and nested plans as long as there is at least one operation.
 
 The plan has two main components
 1. io: An object that specifies where the the assertion reports should be written to. This can be HBase, a file on HDFS, or a server. The following points show how to set all possible values of io.
@@ -98,12 +117,16 @@ The plan has two main components
       },
       "outputKey": "assertionKey",
       "outputPath": "topnotch/assertionOutput.parquet"
+    },
+    {
+      "command": "plan",
+      "externalParamsFile": "topnotch/nestedPlan.json"
     }
   ]
 }
 ```
 ## Commands
-### How To Refer To Commands In a Plan
+### How To Specify To Commands and Nested Plans In a Plan JSON File
 #### Input
 Specify each input data set using an object. This can either be a data set from disk or the result of a previous command.
   * Mandatory Arguments:
@@ -117,6 +140,14 @@ Specify each input data set using an object. This can either be a data set from 
     * delimiter - Set this option if and only if the input is a csv, tsv, or other character-delimited file instead of a Parquet file. This string is the delimiter used in the input file. Do not use this field if reading in a Parquet file. This string must contain a single character.
       * type - string
       * example value - ","
+      
+#### externalParamsFile
+Each command and nested plan in a plan uses externalParamsFile to specify the path of a JSON file with more information. The path can have the following forms:
+1. If the parent plan containing the externalParamsFile key is a standalone JSON file on disk, then each externalParamsFile path must refer to a standalone JSON file on disk. Each path can either be relative to the parent plan's location, if the path doesnt start with a /, or absolute, if the path starts with a /.
+    1. Note: externalParamsFile paths in a nested plan will be relative to the path of the nested plan
+1. If the parent plan is packaged in a jar on the local file system, then each externalParamsFile must refer to a JSON file packaged in a jar on the local file system. Each externalParamsFile path must be the absolute classpath to a JSON file.
+1. If using a REST API to load plans and commands, then all plans and commands must be accessed via the REST API. Each externalParamsFile path must point to the appropriate REST url for retrieving the JSON plan or command by a GET request when the path is appended to the value passed in for the --planServerURL flag. 
+      
 #### Assertion:
   * Mandatory Arguments:
     * command - specifies that the command is of type assertion
@@ -124,7 +155,7 @@ Specify each input data set using an object. This can either be a data set from 
       * example value - "assertion" (NOTE: assertion is the only valid value)
     * externalParamsFile - specifies the location of the JSON file for the assertion
       * type - string
-      * example value - "../path/to/assertion.json" (NOTE: path is on local file system and relative to location of plan unless it starts with /)
+      * example value - "../path/to/assertion.json" 
     * input - specifies the input to the assertion
       * type - object
       * example value - see the above section on how to specify input
@@ -156,13 +187,14 @@ Specify each input data set using an object. This can either be a data set from 
   ```
   
 #### Diff
+  * Note: when diffing on nested dataframes, the columns will be unnested and all occurrences of "." in any column name will be replaced with "_".
   * Mandatory Arguments:
     * command - specifies that the command is of type diff
       * type - string
       * example value - "diff" (NOTE: diff is the only valid value)
     * externalParamsFile - specifies the location of the JSON file for the assertion
       * type - string
-      * example value - "../path/to/diff.json" (NOTE: path is on local file system and relative to location of plan unless it starts with /)
+      * example value - "../path/to/diff.json"
     * input1 - specifies the first of the two input data sets to diff
       * type - object
       * example value - see the above section on how to specify input
@@ -224,7 +256,7 @@ Specify each input data set using an object. This can either be a data set from 
       * example value - "view" (NOTE: view is the only valid value)
     * externalParamsFile - specifies the location of the JSON file for the view
       * type - string
-      * example value - "../path/to/view.json" (NOTE: path is on local file system and relative to location of plan unless it starts with /)
+      * example value - "../path/to/view.json"
     * inputs - specifies the inputs to the view
       * type - a list of objects
       * example value - see the above section on how to specify each input object
@@ -241,7 +273,7 @@ Specify each input data set using an object. This can either be a data set from 
     * tableName - Mount the output of this command as a table for access through SparkSQL. This can only be set if outputPath is also set.
       * type - string
       * example value - "tableToMount" (NOTE: the table will be mounted in the default )
-  * Example of How to Specify an Assertion in a Plan
+  * Example of How to Specify a View in a Plan
   ```javascript
   {
     "command": "view",
@@ -261,6 +293,23 @@ Specify each input data set using an object. This can either be a data set from 
     "cache": true
   }
   ```
+  
+#### Nested Plan 
+  * Mandatory Arguments:
+    * command - specifies that this is a nested plan
+      * type - string
+      * example value - "plan" (NOTE: plan is the only valid value)
+    * externalParamsFile - specifies the location of the JSON file for the nested plan
+      * type - string
+      * example value - "../path/to/nestedPlan.json" 
+  * Example of How to Specify a Nested Plan in a Plan
+  ```javascript
+  {
+    "command": "plan",
+    "externalParamsFile": "topnotch/nestedPlan.json"
+  }
+  ```
+  
 ### How To Write Commands JSON Files
 #### Assertion:
   * Mandatory Arguments:
@@ -425,8 +474,8 @@ Specify each input data set using an object. This can either be a data set from 
     
 ## Variables
 1. Any part of any command or plan can contain a variable. Just add ${variableName} in the key or value of any JSON.
-1. Pass in a dictionary that defines values for the variables using the --variableDictionary flag.
-1. Below is an example for how to parameterize an input to an assertion using the date and product type is:
+1. Pass in a dictionary that defines values for the variables using the --variableDictionary flag. The dictionary should be a comma-separated list of pairs with the format variableName=variableValue.
+1. Below is an example for how to parameterize an input to an assertion using the date and product type:
   * Command line argument: --variableDictionary="date=$(date +%D),productType=mtg"
   * Input example:
   ```

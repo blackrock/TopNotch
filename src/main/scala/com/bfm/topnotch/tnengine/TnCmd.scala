@@ -1,5 +1,11 @@
 package com.bfm.topnotch.tnengine
 
+import java.io.{PrintWriter, StringWriter}
+
+import org.json4s._
+import org.json4s.native.Serialization
+import org.json4s.native.Serialization.writePretty
+
 /**
  * A command for TnEngine to run
  */
@@ -15,6 +21,12 @@ abstract class TnCmd {
   /** If writing the output in hdfs, the name of the table to mount, otherwise none. Note: this will be ignored if
     * outputPath is not specified. */
   val tableName: Option[String]
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+  /**
+    * Overriding toString to making output of unit tests that have cmds in error logs easier to understand
+    */
+  override def toString = writePretty(this)
 }
 
 /**
@@ -60,6 +72,20 @@ case class TnErrorCmd (
                             tableName: Option[String] = None
                             ) extends TnCmd {
   override def toString: String = {
-    s"There was an error with the command in position ${cmdIdx}. The command was: \n ${cmdString} \n The message was: ${errorStr} \n\n"
+    s"There was an error with the command in position ${cmdIdx} in its plan. The command was: \n ${cmdString} \n " +
+      s"The message was: \n ${errorStr} \n\n END OF ERROR MESSAGE FOR COMMAND IN POSITION ${cmdIdx} \n\n"
+  }
+}
+
+object TnErrorCmd {
+  /**
+    * Helper method for easily getting the stack trace of an exception as a string
+    * @param e The exception
+    * @return The exception's stack trace
+    */
+  def getExceptionStackTrace(e: Exception): String = {
+    val sw = new StringWriter
+    e.printStackTrace(new PrintWriter(sw))
+    sw.toString
   }
 }
