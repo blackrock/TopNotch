@@ -26,7 +26,7 @@ TopNotch uses rules to verify individual components of a data set. Each rule def
     1. See the __example__ folder for a sample data set and configuration files.
 3. Run __bin/TopNotchRunner.sh__ with the plan file passed in as an argument. 
     1. To try the example, run ```bin/TopNotchRunner.sh --planPath example/plan.json```.
-    1. Note that you must set the HADOOP_CONF_DIR and SPARK_HOME variables either in the script or as external environment variables.
+    1. Note that you must set the SPARK_HOME variable either in the script or as external environment variables
     1. Note that if you have configured your Spark installation to use an existing HDFS system, you will need to upload __example/exampleAssertionInput.parquet__ to that HDFS system. You should make an example folder in your home folder on HDFS and upload __example/exampleAssertionInput.parquet__ to that folder on HDFS.
 4. View the resulting report and parquet file in the __topnotch__ folder in your home directory on HDFS.
     1. To view the results of the example, look at the JSON file __topnotch/plan.json__ and the Parquet file __example/exampleAssertionOutput.parquet__. Note that if you have configured your Spark installation to use an exisiting HDFS system, the JSON and Parquet files will appear in the topnotch and example folders in your home directory on HDFS.
