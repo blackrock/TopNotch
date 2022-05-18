@@ -1,3 +1,6 @@
+---
+dist: focal
+services: docker
 language: java
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - 'bash <(curl -s https://codecov.io/bash)'
